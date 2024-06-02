@@ -39,6 +39,10 @@ public class Scanner {
     private int c = 0;
     private int line = 0;
 
+    public static List<Token> scan(String code) {
+        return new Scanner(code).scan();
+    }
+
     public List<Token> scan() {
         if (code == null || code.isEmpty()) return List.of();
         List<Token> r = new ArrayList<>();

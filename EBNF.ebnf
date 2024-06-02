@@ -21,8 +21,9 @@ null = "null" ;
 program = { declaration }, EOF ;
 declaration = statement | variable-declaration ;
 
-statement = expression, ";" ;
+statement = ( assignment | expression ), ";" ;
 variable-declaration = "var", identifier, ( "=", expression ) ?, ";" ;
+assignment = identifier, "=", ( assignment | expression ) ;
 
 expression = equality | ternary ;
 ternary    = expression, "?", expression, ":", expression ;

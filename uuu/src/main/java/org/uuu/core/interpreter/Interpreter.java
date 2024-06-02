@@ -7,11 +7,14 @@ import org.uuu.core.ast.expression.*;
 import org.uuu.core.ast.statement.ExprStmt;
 import org.uuu.core.ast.statement.Stmt;
 import org.uuu.core.ast.statement.Var;
+import org.uuu.core.runtime.Environment;
 
 import java.util.List;
 import java.util.Objects;
 
 public class Interpreter implements Visitor<Object> {
+
+    final Environment env = new Environment();
 
     public static void interpret(List<Stmt> statements) {
         Interpreter interpreter = new Interpreter();
@@ -20,7 +23,9 @@ public class Interpreter implements Visitor<Object> {
 
     @Override
     public Object accept(Assign assign) {
-        return null;
+        Object value = evaluate(assign.getValue());
+        env.assign(assign.getName(), value);
+        return value;
     }
 
     @Override
@@ -85,12 +90,14 @@ public class Interpreter implements Visitor<Object> {
 
     @Override
     public Object accept(Var var) {
+        if (var.getInitializer() != null) env.define(var.getName(), evaluate(var.getInitializer()));
+        else env.define(var.getName(), null);
         return null;
     }
 
     @Override
     public Object accept(Variable variable) {
-        return null;
+        return env.get(variable.getName());
     }
 
     private Object evaluate(Expr expr) {
