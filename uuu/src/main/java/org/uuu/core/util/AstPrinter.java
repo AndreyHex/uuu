@@ -1,12 +1,18 @@
 package org.uuu.core.util;
 
-import org.uuu.core.ast.*;
+import org.uuu.core.ast.Assign;
+import org.uuu.core.ast.Call;
+import org.uuu.core.ast.Visitor;
+import org.uuu.core.ast.expression.*;
+import org.uuu.core.ast.statement.ExprStmt;
+import org.uuu.core.ast.statement.Stmt;
+import org.uuu.core.ast.statement.Var;
 import org.uuu.core.scanner.Token;
 
 public class AstPrinter implements Visitor<String> {
 
-    public static String print(Expr expr) {
-        return expr.accept(new AstPrinter());
+    public static String print(Stmt stmt) {
+        return stmt.accept(new AstPrinter());
     }
 
     @Override
@@ -45,6 +51,22 @@ public class AstPrinter implements Visitor<String> {
     @Override
     public String accept(Group group) {
         return "(group " + group.getExpression().accept(this) + ")";
+    }
+
+    @Override
+    public String accept(ExprStmt exprStmt) {
+        return exprStmt.getExpression().accept(this) + ";\n";
+    }
+
+    @Override
+    public String accept(Var var) {
+        return "var " + var.getName().getLexeme() + " = " +
+                (var.getInitializer() != null ? var.getInitializer().accept(this) : "") + ";";
+    }
+
+    @Override
+    public String accept(Variable variable) {
+        return variable.getName().getLexeme();
     }
 
     private String printOperator(Token token) {

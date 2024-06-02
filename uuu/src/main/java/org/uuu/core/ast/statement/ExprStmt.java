@@ -1,11 +1,13 @@
-package org.uuu.core.ast;
+package org.uuu.core.ast.statement;
 
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
+import org.uuu.core.ast.Visitor;
+import org.uuu.core.ast.expression.Expr;
 
 @Data
 @RequiredArgsConstructor
-public class Group extends Expr {
+public class ExprStmt extends Stmt {
     private final Expr expression;
 
     @Override

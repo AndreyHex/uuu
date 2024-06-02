@@ -1,10 +1,14 @@
 package org.uuu.core.parser;
 
 import lombok.RequiredArgsConstructor;
-import org.uuu.core.ast.*;
+import org.uuu.core.ast.expression.*;
+import org.uuu.core.ast.statement.ExprStmt;
+import org.uuu.core.ast.statement.Stmt;
+import org.uuu.core.ast.statement.Var;
 import org.uuu.core.scanner.Token;
 import org.uuu.core.scanner.TokenType;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Supplier;
 
@@ -14,9 +18,44 @@ public class Parser {
     private final List<Token> tokens;
     private int i = 0;
 
-    public Expr test() {
-        return expression();
+    public List<Stmt> run() {
+        List<Stmt> res = new ArrayList<>();
+        while (!end()) res.add(declaration());
+        return res;
     }
+
+    public static List<Stmt> parse(List<Token> tokens) {
+        return new Parser(tokens).run();
+    }
+
+    private Stmt declaration() {
+        if (peek().getType().equals(TokenType.VAR)) return varDeclaration();
+        else return statement();
+    }
+
+    private Stmt varDeclaration() {
+        pop(); // pop 'var'
+        Token name = pop();
+        if (!name.getType().equals(TokenType.IDENTIFIER)) throw new RuntimeException("Expected identifier after var.");
+        Expr expr = null;
+        if (!peek().getType().equals(TokenType.EQUAL)) {
+            pop();
+            expr = expression();
+        }
+        if (!peek().getType().equals(TokenType.SEMICOLON))
+            throw new RuntimeException("Expected semicolon at the end of the var declaration.");
+        pop();
+        return new Var(name, expr);
+    }
+
+    private Stmt statement() {
+        Expr expr = expression();
+        if (!peek().getType().equals(TokenType.SEMICOLON))
+            throw new RuntimeException("Expected semicolon at the end of the statement.");
+        pop();
+        return new ExprStmt(expr);
+    }
+
 
     private Expr expression() {
         Expr expr = equality();

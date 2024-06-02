@@ -1,7 +1,8 @@
-package org.uuu.core.ast;
+package org.uuu.core.ast.expression;
 
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
+import org.uuu.core.ast.Visitor;
 
 @Data
 @RequiredArgsConstructor

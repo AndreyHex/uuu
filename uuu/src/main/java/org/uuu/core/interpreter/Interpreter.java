@@ -1,13 +1,21 @@
 package org.uuu.core.interpreter;
 
-import org.uuu.core.ast.*;
+import org.uuu.core.ast.Assign;
+import org.uuu.core.ast.Call;
+import org.uuu.core.ast.Visitor;
+import org.uuu.core.ast.expression.*;
+import org.uuu.core.ast.statement.ExprStmt;
+import org.uuu.core.ast.statement.Stmt;
+import org.uuu.core.ast.statement.Var;
 
+import java.util.List;
 import java.util.Objects;
 
 public class Interpreter implements Visitor<Object> {
 
-    public static Object interpret(Expr expr) {
-        return expr.accept(new Interpreter());
+    public static void interpret(List<Stmt> statements) {
+        Interpreter interpreter = new Interpreter();
+        statements.forEach(e -> e.accept(interpreter));
     }
 
     @Override
@@ -67,6 +75,22 @@ public class Interpreter implements Visitor<Object> {
     @Override
     public Object accept(Group group) {
         return evaluate(group.getExpression());
+    }
+
+    @Override
+    public Object accept(ExprStmt exprStmt) {
+        evaluate(exprStmt.getExpression());
+        return null;
+    }
+
+    @Override
+    public Object accept(Var var) {
+        return null;
+    }
+
+    @Override
+    public Object accept(Variable variable) {
+        return null;
     }
 
     private Object evaluate(Expr expr) {

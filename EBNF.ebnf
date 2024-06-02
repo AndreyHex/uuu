@@ -14,8 +14,15 @@ character = letter | digit | symbol | " " ;
 
 number = [ "-" ], digit, { digit }, [ ".", digit + ] ;
 string = '"', { character }, '"' ;
+identifier = letter | "_", { letter | digit | "_" | "-" } ;
 boolean = "true" | "false" ;
 null = "null" ;
+
+program = { declaration }, EOF ;
+declaration = statement | variable-declaration ;
+
+statement = expression, ";" ;
+variable-declaration = "var", identifier, ( "=", expression ) ?, ";" ;
 
 expression = equality | ternary ;
 ternary    = expression, "?", expression, ":", expression ;
@@ -24,6 +31,6 @@ comparison = term, { ( ">" | "<" | ">=" | "<=" ), term } ;
 term       = factor, { ( "+" | "-" ), factor } ;
 factor     = unary, { ( "/" | "*" ), unary } ;  (* make it left recursive? *)
 unary      = ( "!" | "-" ), unary | primary ;
-primary    = number | string | boolean | null | "(", expression, ")" ;
+primary    = number | string | boolean | null | ( "(", expression, ")" ) | identifier ;
 
 
