@@ -1,6 +1,7 @@
 package org.uuu.core.ast;
 
 import org.uuu.core.ast.expression.*;
+import org.uuu.core.ast.statement.Block;
 import org.uuu.core.ast.statement.ExprStmt;
 import org.uuu.core.ast.statement.Var;
 
@@ -24,4 +25,6 @@ public interface Visitor<T> {
     T accept(Var var);
 
     T accept(Variable variable);
+
+    T accept(Block block);
 }

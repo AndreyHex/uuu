@@ -4,10 +4,13 @@ import org.uuu.core.ast.Assign;
 import org.uuu.core.ast.Call;
 import org.uuu.core.ast.Visitor;
 import org.uuu.core.ast.expression.*;
+import org.uuu.core.ast.statement.Block;
 import org.uuu.core.ast.statement.ExprStmt;
 import org.uuu.core.ast.statement.Stmt;
 import org.uuu.core.ast.statement.Var;
 import org.uuu.core.scanner.Token;
+
+import java.util.stream.Collectors;
 
 public class AstPrinter implements Visitor<String> {
 
@@ -67,6 +70,11 @@ public class AstPrinter implements Visitor<String> {
     @Override
     public String accept(Variable variable) {
         return variable.getName().getLexeme();
+    }
+
+    @Override
+    public String accept(Block block) {
+        return "{ " + block.getStatements().stream().map(e -> e.accept(this)).collect(Collectors.joining(" ")) + " }";
     }
 
     private String printOperator(Token token) {

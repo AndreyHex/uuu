@@ -4,6 +4,7 @@ import org.uuu.core.ast.Assign;
 import org.uuu.core.ast.Call;
 import org.uuu.core.ast.Visitor;
 import org.uuu.core.ast.expression.*;
+import org.uuu.core.ast.statement.Block;
 import org.uuu.core.ast.statement.ExprStmt;
 import org.uuu.core.ast.statement.Stmt;
 import org.uuu.core.ast.statement.Var;
@@ -14,7 +15,7 @@ import java.util.Objects;
 
 public class Interpreter implements Visitor<Object> {
 
-    final Environment env = new Environment();
+    Environment env = new Environment();
 
     public static void interpret(List<Stmt> statements) {
         Interpreter interpreter = new Interpreter();
@@ -98,6 +99,22 @@ public class Interpreter implements Visitor<Object> {
     @Override
     public Object accept(Variable variable) {
         return env.get(variable.getName());
+    }
+
+    @Override
+    public Object accept(Block block) {
+        executeBlock(block.getStatements(), new Environment(env));
+        return null;
+    }
+
+    private void executeBlock(List<Stmt> statements, Environment environment) {
+        Environment prev = env;
+        try {
+            env = environment;
+            statements.forEach(e -> e.accept(this));
+        } finally {
+            env = prev;
+        }
     }
 
     private Object evaluate(Expr expr) {

@@ -7,8 +7,10 @@ import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.ArgumentsProvider;
 import org.junit.jupiter.params.provider.ArgumentsSource;
 import org.uuu.core.ast.Assign;
+import org.uuu.core.ast.statement.Block;
 import org.uuu.core.ast.statement.ExprStmt;
 import org.uuu.core.ast.statement.Stmt;
+import org.uuu.core.ast.statement.Var;
 import org.uuu.core.scanner.Scanner;
 import org.uuu.core.util.AstPrinter;
 
@@ -43,6 +45,34 @@ class ParserTest {
         assertInstanceOf(ExprStmt.class, parse.get(0));
         ExprStmt stmt = (ExprStmt) parse.get(0);
         assertInstanceOf(Assign.class, stmt.getExpression());
+    }
+
+    @Test
+    public void testBlock() {
+        List<Stmt> parse = Parser.parse(Scanner.scan("a = 2 + 2; { var a = 23; }"));
+        assertInstanceOf(ExprStmt.class, parse.get(0));
+        assertInstanceOf(Block.class, parse.get(1));
+    }
+
+    @Test
+    public void testNestedBlocks() {
+        List<Stmt> parse = Parser.parse(Scanner.scan("a = 2 + 2; { var a = 23; {} a = b; { var g; { var j; }}}"));
+        assertInstanceOf(ExprStmt.class, parse.get(0));
+        assertInstanceOf(Block.class, parse.get(1));
+        List<Stmt> statements = ((Block) parse.get(1)).getStatements();
+        assertInstanceOf(Var.class, statements.get(0));
+        assertInstanceOf(Block.class, statements.get(1));
+        assertInstanceOf(ExprStmt.class, statements.get(2));
+        assertInstanceOf(Block.class, statements.get(3));
+        List<Stmt> inner = ((Block) statements.get(3)).getStatements();
+        assertInstanceOf(Var.class, inner.get(0));
+        assertInstanceOf(Block.class, inner.get(1));
+    }
+
+    @Test
+    public void testBlockError() {
+        assertDoesNotThrow(() -> Parser.parse(Scanner.scan("{var a=2;{a=4;}{}{{}} }")));
+        assertThrows(RuntimeException.class, () -> Parser.parse(Scanner.scan("{var a=2;{a=4;}{}{{}} } }")));
     }
 
     @Test

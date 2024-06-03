@@ -3,6 +3,7 @@ package org.uuu.core.parser;
 import lombok.RequiredArgsConstructor;
 import org.uuu.core.ast.Assign;
 import org.uuu.core.ast.expression.*;
+import org.uuu.core.ast.statement.Block;
 import org.uuu.core.ast.statement.ExprStmt;
 import org.uuu.core.ast.statement.Stmt;
 import org.uuu.core.ast.statement.Var;
@@ -50,6 +51,7 @@ public class Parser {
     }
 
     private Stmt statement() {
+        if (peek().getType().equals(TokenType.LEFT_BRACE)) return block();
         Expr expr = expression();
         if (match(TokenType.EQUAL)) {
             pop(); //equals
@@ -61,6 +63,16 @@ public class Parser {
             throw new RuntimeException("Expected semicolon at the end of the statement.");
         pop();
         return new ExprStmt(expr);
+    }
+
+    private Stmt block() {
+        pop(); // pop open brace
+        List<Stmt> statements = new ArrayList<>();
+        while (!end() && !peek().getType().equals(TokenType.RIGHT_BRACE)) statements.add(declaration());
+        Token pop = pop();
+        if (!pop.getType().equals(TokenType.RIGHT_BRACE))
+            throw new RuntimeException("Unexpected symbol at the end of the block.");
+        return new Block(statements);
     }
 
 
