@@ -1,12 +1,8 @@
 package org.uuu.core.parser;
 
 import lombok.RequiredArgsConstructor;
-import org.uuu.core.ast.Assign;
 import org.uuu.core.ast.expression.*;
-import org.uuu.core.ast.statement.Block;
-import org.uuu.core.ast.statement.ExprStmt;
-import org.uuu.core.ast.statement.Stmt;
-import org.uuu.core.ast.statement.Var;
+import org.uuu.core.ast.statement.*;
 import org.uuu.core.scanner.Token;
 import org.uuu.core.scanner.TokenType;
 
@@ -44,7 +40,7 @@ public class Parser {
             pop();
             expr = expression();
         }
-        if (!peek().getType().equals(TokenType.SEMICOLON))
+        if (end() || !peek().getType().equals(TokenType.SEMICOLON))
             throw new RuntimeException("Expected semicolon at the end of var declaration.");
         pop();
         return new Var(name, expr);
@@ -52,6 +48,17 @@ public class Parser {
 
     private Stmt statement() {
         if (peek().getType().equals(TokenType.LEFT_BRACE)) return block();
+        if (peek().getType().equals(TokenType.IF)) return ifStmt();
+        if (peek().getType().equals(TokenType.WHILE)) return whileStmt();
+        if (peek().getType().equals(TokenType.FOR)) return forStmt();
+        ExprStmt exprStmt = new ExprStmt(exprStmt());
+        if (!peek().getType().equals(TokenType.SEMICOLON))
+            throw new RuntimeException("Expected semicolon at the end of the statement.");
+        pop();
+        return exprStmt;
+    }
+
+    private Expr exprStmt() {
         Expr expr = expression();
         if (match(TokenType.EQUAL)) {
             pop(); //equals
@@ -59,10 +66,57 @@ public class Parser {
             if (expr instanceof Variable variable) expr = new Assign(variable.getName(), value);
             else throw new RuntimeException("Invalid assignment.");
         }
-        if (!peek().getType().equals(TokenType.SEMICOLON))
-            throw new RuntimeException("Expected semicolon at the end of the statement.");
-        pop();
-        return new ExprStmt(expr);
+        return expr;
+    }
+
+    private Stmt ifStmt() {
+        pop(); // pop if
+        if (!pop().getType().equals(TokenType.LEFT_PAREN)) throw new RuntimeException("Expected left paren.");
+        Expr condition = expression();
+        if (!pop().getType().equals(TokenType.RIGHT_PARENT)) throw new RuntimeException("Expected right paren.");
+        Stmt onTrue = statement();
+        if (peek().getType().equals(TokenType.ELSE)) {
+            pop();
+            Stmt onFalse = statement();
+            return new If(condition, onTrue, onFalse);
+        }
+        return new If(condition, onTrue, null);
+    }
+
+    private Stmt whileStmt() {
+        pop(); // pop while
+        if (!pop().getType().equals(TokenType.LEFT_PAREN)) throw new RuntimeException("Expected left paren.");
+        Expr condition = expression();
+        if (!pop().getType().equals(TokenType.RIGHT_PARENT)) throw new RuntimeException("Expected right paren.");
+        Stmt body = statement();
+        return new While(condition, body);
+    }
+
+    private Stmt forStmt() {
+        pop(); // pop for
+        if (!pop().getType().equals(TokenType.LEFT_PAREN)) throw new RuntimeException("Expected '(' after 'for'.");
+
+        Stmt initializer;
+        Expr condition = null;
+        Expr increment = null;
+
+        if (peek().getType().equals(TokenType.SEMICOLON)) initializer = null;
+        else if (peek().getType().equals(TokenType.VAR)) initializer = varDeclaration();
+        else initializer = new ExprStmt(exprStmt());
+
+        if (!peek().getType().equals(TokenType.RIGHT_PARENT)) condition = expression();
+        if (!pop().getType().equals(TokenType.SEMICOLON)) throw new RuntimeException("Expected ';' after condition.");
+        if (!peek().getType().equals(TokenType.RIGHT_PARENT)) increment = exprStmt();
+        if (!pop().getType().equals(TokenType.RIGHT_PARENT))
+            throw new RuntimeException("Expected ')' after 'for' clauses");
+        Stmt body = statement();
+
+        // transform to while loop
+        if (increment != null) body = new Block(List.of(body, new ExprStmt(increment)));
+        if (condition != null) body = new While(condition, body);
+        else body = new While(new Literal(true), body);
+        if (initializer != null) body = new Block(List.of(initializer, body));
+        return body;
     }
 
     private Stmt block() {
@@ -77,7 +131,7 @@ public class Parser {
 
 
     private Expr expression() {
-        Expr expr = equality();
+        Expr expr = or();
         if (match(TokenType.QUESTION)) {
             pop();
             Expr onTrue = expression();
@@ -87,6 +141,26 @@ public class Parser {
             expr = new Ternary(expr, onTrue, onFalse);
         }
         return expr;
+    }
+
+    private Expr or() {
+        Expr left = and();
+        while (!end() && peek().getType().equals(TokenType.OR)) {
+            Token operator = pop();
+            Expr right = and();
+            left = new Logic(operator, left, right);
+        }
+        return left;
+    }
+
+    private Expr and() {
+        Expr left = equality();
+        while (!end() && peek().getType().equals(TokenType.AND)) {
+            Token operator = pop();
+            Expr right = equality();
+            left = new Logic(operator, left, right);
+        }
+        return left;
     }
 
     private Expr equality() {
@@ -130,7 +204,7 @@ public class Parser {
             if (!pop().getType().equals(TokenType.RIGHT_PARENT)) throw new RuntimeException("Expected ')'");
             return new Group(grouped);
         }
-        throw new RuntimeException("Unexpected symbol");
+        throw new RuntimeException("Unexpected symbol at " + pop.getLine() + "|" + pop.getPos());
     }
 
     private Expr recurs(Supplier<Expr> sup, TokenType... types) {

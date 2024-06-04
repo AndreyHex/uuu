@@ -10,21 +10,22 @@ public class Token {
     private final String lexeme; // name?
     private final Object literal; // value of literal?
     private final int line;
+    private final int pos;
 
-    public static Token ofType(TokenType type, int line) {
-        return new Token(type, "", null, line);
+    public static Token ofType(TokenType type, int line, int pos) {
+        return new Token(type, "", null, line, pos);
     }
 
-    public static Token ofNumber(double value, int line) {
-        return new Token(TokenType.NUMBER, "", value, line);
+    public static Token ofNumber(double value, int line, int pos) {
+        return new Token(TokenType.NUMBER, "", value, line, pos);
     }
 
-    public static Token ofStr(String value, int line) {
-        return new Token(TokenType.STRING, "", value, line);
+    public static Token ofStr(String value, int line, int pos) {
+        return new Token(TokenType.STRING, "", value, line, pos);
     }
 
-    public static Token ofIdent(String lexeme, int line) {
-        return new Token(TokenType.IDENTIFIER, lexeme, null, line);
+    public static Token ofIdent(String lexeme, int line, int pos) {
+        return new Token(TokenType.IDENTIFIER, lexeme, null, line, pos);
     }
 
     @Override

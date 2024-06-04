@@ -6,11 +6,8 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.ArgumentsProvider;
 import org.junit.jupiter.params.provider.ArgumentsSource;
-import org.uuu.core.ast.Assign;
-import org.uuu.core.ast.statement.Block;
-import org.uuu.core.ast.statement.ExprStmt;
-import org.uuu.core.ast.statement.Stmt;
-import org.uuu.core.ast.statement.Var;
+import org.uuu.core.ast.expression.Assign;
+import org.uuu.core.ast.statement.*;
 import org.uuu.core.scanner.Scanner;
 import org.uuu.core.util.AstPrinter;
 
@@ -21,18 +18,21 @@ import static org.junit.jupiter.api.Assertions.*;
 
 class ParserTest {
 
-    private static final Expression[] EXPRESSION_TESTS = new Expression[]{
-            new Expression("true+!true;", "(+ true (! true));"),
-            new Expression("!true?-!true:1-1;", "((! true) ? (- (! true)) : (- 1.0 1.0));"),
-            new Expression("!true?1>2?2:false:1-1;", "((! true) ? ((> 1.0 2.0) ? 2.0 : false) : (- 1.0 1.0));"),
-            new Expression("(2+3)/3;", "(/ (group (+ 2.0 3.0)) 3.0);"),
-            new Expression("(-2-2-2)==3;", "(== (group (- (- (- 2.0) 2.0) 2.0)) 3.0);"),
-            new Expression("var test = 4;", "var test = 4.0;"),
-            new Expression("var d_d = 4 + 2;", "var d_d = (+ 4.0 2.0);"),
+    private static final TestCase[] TEST_CASES = new TestCase[]{
+            new TestCase("true+!true;", "(+ true (! true));"),
+            new TestCase("!true?-!true:1-1;", "((! true) ? (- (! true)) : (- 1.0 1.0));"),
+            new TestCase("!true?1>2?2:false:1-1;", "((! true) ? ((> 1.0 2.0) ? 2.0 : false) : (- 1.0 1.0));"),
+            new TestCase("(2+3)/3;", "(/ (group (+ 2.0 3.0)) 3.0);"),
+            new TestCase("(-2-2-2)==3;", "(== (group (- (- (- 2.0) 2.0) 2.0)) 3.0);"),
+            new TestCase("var test = 4;", "var test = 4.0;"),
+            new TestCase("var d_d = 4 + 2;", "var d_d = (+ 4.0 2.0);"),
+            new TestCase("var d = true | false;", "var d = (| true false);"),
+            new TestCase("var d = true & false;", "var d = (& true false);"),
+            new TestCase("var d = true & ( false | false );", "var d = (& true (group (| false false)));"),
     };
 
     @ParameterizedTest(name = "{index}:{0}")
-    @ArgumentsSource(ExpressionsSource.class)
+    @ArgumentsSource(TestCasesSource.class)
     public void singleExpressionTest(String code, String expected) {
         List<Stmt> parse = Parser.parse(new Scanner(code).scan());
         assertEquals(1, parse.size());
@@ -45,6 +45,12 @@ class ParserTest {
         assertInstanceOf(ExprStmt.class, parse.get(0));
         ExprStmt stmt = (ExprStmt) parse.get(0);
         assertInstanceOf(Assign.class, stmt.getExpression());
+    }
+
+    @Test
+    public void testIfElse() {
+        List<Stmt> parse = Parser.parse(Scanner.scan("if(true) a = 2; else a = 3;"));
+        assertInstanceOf(If.class, parse.get(0));
     }
 
     @Test
@@ -88,14 +94,14 @@ class ParserTest {
         assertThrows(RuntimeException.class, () -> Parser.parse(new Scanner("var test = 23").scan()));
     }
 
-    private static class ExpressionsSource implements ArgumentsProvider {
+    private static class TestCasesSource implements ArgumentsProvider {
         @Override
         public Stream<? extends Arguments> provideArguments(ExtensionContext extensionContext) throws Exception {
-            return Stream.of(EXPRESSION_TESTS).map(Expression::toArguments);
+            return Stream.of(TEST_CASES).map(TestCase::toArguments);
         }
     }
 
-    private record Expression(String code, String expected) {
+    private record TestCase(String code, String expected) {
         public Arguments toArguments() {
             return Arguments.of(code, expected);
         }

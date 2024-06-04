@@ -8,6 +8,7 @@ import java.util.Map;
 
 @RequiredArgsConstructor
 public class Environment {
+
     private final Environment enclosing;
     private final Map<String, Object> variables = new HashMap<>();
 

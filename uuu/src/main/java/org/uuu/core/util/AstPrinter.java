@@ -1,13 +1,9 @@
 package org.uuu.core.util;
 
-import org.uuu.core.ast.Assign;
 import org.uuu.core.ast.Call;
 import org.uuu.core.ast.Visitor;
 import org.uuu.core.ast.expression.*;
-import org.uuu.core.ast.statement.Block;
-import org.uuu.core.ast.statement.ExprStmt;
-import org.uuu.core.ast.statement.Stmt;
-import org.uuu.core.ast.statement.Var;
+import org.uuu.core.ast.statement.*;
 import org.uuu.core.scanner.Token;
 
 import java.util.stream.Collectors;
@@ -20,7 +16,7 @@ public class AstPrinter implements Visitor<String> {
 
     @Override
     public String accept(Assign assign) {
-        return "";
+        return assign.getName().getLexeme() + " = " + assign.getValue().accept(this);
     }
 
     @Override
@@ -77,6 +73,23 @@ public class AstPrinter implements Visitor<String> {
         return "{ " + block.getStatements().stream().map(e -> e.accept(this)).collect(Collectors.joining(" ")) + " }";
     }
 
+    @Override
+    public String accept(If anIf) {
+        return "if(" + anIf.getCondition().accept(this) + ") " + anIf.getOnTrue().accept(this) + "" +
+                (anIf.getOnFalse() == null ? "" : "else " + anIf.getOnFalse().accept(this));
+    }
+
+    @Override
+    public String accept(Logic logic) {
+        return "(" + printOperator(logic.getOperator()) + " " + logic.getLeft().accept(this) + " " +
+                logic.getRight().accept(this) + ")";
+    }
+
+    @Override
+    public String accept(While aWhile) {
+        return "while(" + aWhile.getCondition().accept(this) + ") " + aWhile.getBody().accept(this);
+    }
+
     private String printOperator(Token token) {
         return switch (token.getType()) {
             case BANG -> "!";
@@ -89,6 +102,8 @@ public class AstPrinter implements Visitor<String> {
             case GREATER -> ">";
             case LESS -> "<";
             case EQUAL_EQUAL -> "==";
+            case OR -> "|";
+            case AND -> "&";
             default -> throw new IllegalStateException("Unexpected value: " + token.getType());
         };
     }

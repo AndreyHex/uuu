@@ -73,8 +73,8 @@ public class Scanner {
         }
         c--;
         String str = identifier.toString();
-        if (keyWords.containsKey(str)) return Optional.of(Token.ofType(keyWords.get(str), line));
-        else return Optional.of(Token.ofIdent(str, line));
+        if (keyWords.containsKey(str)) return Optional.of(Token.ofType(keyWords.get(str), line, c));
+        else return Optional.of(Token.ofIdent(str, line, c));
     }
 
     private Optional<Token> trySimple() {
@@ -83,44 +83,44 @@ public class Scanner {
 
     private Token parse() {
         return switch (current()) {
-            case '(' -> Token.ofType(TokenType.LEFT_PAREN, line);
-            case ')' -> Token.ofType(TokenType.RIGHT_PARENT, line);
-            case '{' -> Token.ofType(TokenType.LEFT_BRACE, line);
-            case '}' -> Token.ofType(TokenType.RIGHT_BRACE, line);
-            case ',' -> Token.ofType(TokenType.COMMA, line);
-            case '.' -> Token.ofType(TokenType.DOT, line);
-            case '-' -> Token.ofType(TokenType.MINUS, line);
-            case '+' -> Token.ofType(TokenType.PLUS, line);
-            case ';' -> Token.ofType(TokenType.SEMICOLON, line);
-            case '*' -> Token.ofType(TokenType.STAR, line);
-            case '/' -> Token.ofType(TokenType.SLASH, line);
-            case '&' -> Token.ofType(TokenType.AND, line);
-            case '|' -> Token.ofType(TokenType.OR, line);
-            case '?' -> Token.ofType(TokenType.QUESTION, line);
-            case ':' -> Token.ofType(TokenType.COLON, line);
+            case '(' -> Token.ofType(TokenType.LEFT_PAREN, line, c);
+            case ')' -> Token.ofType(TokenType.RIGHT_PARENT, line, c);
+            case '{' -> Token.ofType(TokenType.LEFT_BRACE, line, c);
+            case '}' -> Token.ofType(TokenType.RIGHT_BRACE, line, c);
+            case ',' -> Token.ofType(TokenType.COMMA, line, c);
+            case '.' -> Token.ofType(TokenType.DOT, line, c);
+            case '-' -> Token.ofType(TokenType.MINUS, line, c);
+            case '+' -> Token.ofType(TokenType.PLUS, line, c);
+            case ';' -> Token.ofType(TokenType.SEMICOLON, line, c);
+            case '*' -> Token.ofType(TokenType.STAR, line, c);
+            case '/' -> Token.ofType(TokenType.SLASH, line, c);
+            case '&' -> Token.ofType(TokenType.AND, line, c);
+            case '|' -> Token.ofType(TokenType.OR, line, c);
+            case '?' -> Token.ofType(TokenType.QUESTION, line, c);
+            case ':' -> Token.ofType(TokenType.COLON, line, c);
             case '=' -> {
                 if (peek() == '=') {
                     c++;
-                    yield Token.ofType(TokenType.EQUAL_EQUAL, line);
-                } else yield Token.ofType(TokenType.EQUAL, line);
+                    yield Token.ofType(TokenType.EQUAL_EQUAL, line, c);
+                } else yield Token.ofType(TokenType.EQUAL, line, c);
             }
             case '<' -> {
                 if (peek() == '=') {
                     c++;
-                    yield Token.ofType(TokenType.LESS_EQUAL, line);
-                } else yield Token.ofType(TokenType.LESS, line);
+                    yield Token.ofType(TokenType.LESS_EQUAL, line, c);
+                } else yield Token.ofType(TokenType.LESS, line, c);
             }
             case '>' -> {
                 if (peek() == '=') {
                     c++;
-                    yield Token.ofType(TokenType.GREATER_EQUAL, line);
-                } else yield Token.ofType(TokenType.GREATER, line);
+                    yield Token.ofType(TokenType.GREATER_EQUAL, line, c);
+                } else yield Token.ofType(TokenType.GREATER, line, c);
             }
             case '!' -> {
                 if (peek() == '=') {
                     c++;
-                    yield Token.ofType(TokenType.BANG_EQUAL, line);
-                } else yield Token.ofType(TokenType.BANG, line);
+                    yield Token.ofType(TokenType.BANG_EQUAL, line, c);
+                } else yield Token.ofType(TokenType.BANG, line, c);
             }
             default -> null;
         };
@@ -146,7 +146,7 @@ public class Scanner {
             c++;
         }
         c--;
-        return Token.ofNumber(Double.parseDouble(digit.toString()), line);
+        return Token.ofNumber(Double.parseDouble(digit.toString()), line, c);
 
     }
 
@@ -164,7 +164,7 @@ public class Scanner {
             string.append(current());
             c++;
         }
-        return Token.ofStr(string.toString(), line);
+        return Token.ofStr(string.toString(), line, c);
     }
 
     private boolean isDigit() {

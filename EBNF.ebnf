@@ -18,14 +18,19 @@ identifier = letter | "_", { letter | digit | "_" | "-" } ;
 boolean = "true" | "false" ;
 null = "null" ;
 
-program = { declaration }, EOF ;
-declaration = statement | variable-declaration ;
-statement = block | ( ( assignment | expression ), ";" ) ;
-block = "{", declaration + , "}"
-variable-declaration = "var", identifier, ( "=", expression ) ?, ";" ;
-assignment = identifier, "=", ( assignment | expression ) ;
-
-expression = equality | ternary ;
+program     = { declaration }, EOF ;
+declaration = statement | var-decl ;
+statement   = if | while | block | ( expr-stmt, ";" ) ;
+if          = "if", "(", expression, ")", statement, ( "else", statement ) ? ;
+while       = "while", "(", expression, ")", statement ;
+for         = "for", "(", ( expression | var-decl | ";" ), expression ?, ";", expr-stmt ?, ";", ")", statement ;
+block       = "{", declaration + , "}"
+var-decl    = "var", identifier, ( "=", expression ) ?, ";" ;
+assignment  = identifier, "=", expr-stmt ;
+expr-stmt  = assignment | expression ;
+expression = logic-or | ternary ;
+logic-or   = logic-and, { "|", logic-and } ;
+logic-and  = equality, { "&", equality } ;
 ternary    = expression, "?", expression, ":", expression ;
 equality   = comparison, { ( "!=" | "==" ), comparison } ;
 comparison = term, { ( ">" | "<" | ">=" | "<=" ), term } ;

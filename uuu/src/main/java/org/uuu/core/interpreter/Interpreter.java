@@ -1,25 +1,30 @@
 package org.uuu.core.interpreter;
 
-import org.uuu.core.ast.Assign;
+import lombok.RequiredArgsConstructor;
 import org.uuu.core.ast.Call;
 import org.uuu.core.ast.Visitor;
 import org.uuu.core.ast.expression.*;
-import org.uuu.core.ast.statement.Block;
-import org.uuu.core.ast.statement.ExprStmt;
-import org.uuu.core.ast.statement.Stmt;
-import org.uuu.core.ast.statement.Var;
+import org.uuu.core.ast.statement.*;
 import org.uuu.core.runtime.Environment;
+import org.uuu.core.scanner.TokenType;
 
 import java.util.List;
 import java.util.Objects;
 
+@RequiredArgsConstructor
 public class Interpreter implements Visitor<Object> {
+
+    private final List<Stmt> statements;
 
     Environment env = new Environment();
 
     public static void interpret(List<Stmt> statements) {
-        Interpreter interpreter = new Interpreter();
-        statements.forEach(e -> e.accept(interpreter));
+        new Interpreter(statements).interpret();
+    }
+
+    public Interpreter interpret() {
+        statements.forEach(e -> e.accept(this));
+        return this;
     }
 
     @Override
@@ -104,6 +109,28 @@ public class Interpreter implements Visitor<Object> {
     @Override
     public Object accept(Block block) {
         executeBlock(block.getStatements(), new Environment(env));
+        return null;
+    }
+
+    @Override
+    public Object accept(If anIf) {
+        boolean res = (boolean) anIf.getCondition().accept(this);
+        if (res) return anIf.getOnTrue().accept(this);
+        else return anIf.getOnFalse().accept(this);
+    }
+
+    @Override
+    public Object accept(Logic logic) {
+        Object res = logic.getLeft().accept(this);
+        if (logic.getOperator().getType().equals(TokenType.OR)) {
+            if ((boolean) res) return true;
+        } else if (!(boolean) res) return false;
+        return logic.getRight().accept(this);
+    }
+
+    @Override
+    public Object accept(While aWhile) {
+        while ((boolean) aWhile.getCondition().accept(this)) aWhile.getBody().accept(this);
         return null;
     }
 

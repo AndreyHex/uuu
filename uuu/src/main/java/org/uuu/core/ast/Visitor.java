@@ -1,9 +1,7 @@
 package org.uuu.core.ast;
 
 import org.uuu.core.ast.expression.*;
-import org.uuu.core.ast.statement.Block;
-import org.uuu.core.ast.statement.ExprStmt;
-import org.uuu.core.ast.statement.Var;
+import org.uuu.core.ast.statement.*;
 
 public interface Visitor<T> {
     T accept(Assign assign);
@@ -27,4 +25,10 @@ public interface Visitor<T> {
     T accept(Variable variable);
 
     T accept(Block block);
+
+    T accept(If anIf);
+
+    T accept(Logic logic);
+
+    T accept(While aWhile);
 }
