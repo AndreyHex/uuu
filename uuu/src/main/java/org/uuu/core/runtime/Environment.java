@@ -1,6 +1,7 @@
 package org.uuu.core.runtime;
 
 import lombok.RequiredArgsConstructor;
+import org.uuu.core.interpreter.Function;
 import org.uuu.core.scanner.Token;
 
 import java.util.HashMap;
@@ -25,6 +26,14 @@ public class Environment {
             return;
         }
         throw new RuntimeException("Undefined variable '" + name.getLexeme() + "'.");
+    }
+
+    public void define(Function fn) {
+        define(fn.getDeclaration().getName(), fn);
+    }
+
+    public void define(String name, Object val) {
+        variables.put(name, val);
     }
 
     public void define(Token name, Object val) {

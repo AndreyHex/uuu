@@ -1,22 +1,26 @@
 package org.uuu.core.interpreter;
 
-import lombok.RequiredArgsConstructor;
-import org.uuu.core.ast.Call;
 import org.uuu.core.ast.Visitor;
 import org.uuu.core.ast.expression.*;
 import org.uuu.core.ast.statement.*;
 import org.uuu.core.runtime.Environment;
+import org.uuu.core.runtime.ReturnVal;
 import org.uuu.core.scanner.TokenType;
 
 import java.util.List;
 import java.util.Objects;
 
-@RequiredArgsConstructor
 public class Interpreter implements Visitor<Object> {
 
     private final List<Stmt> statements;
 
-    Environment env = new Environment();
+    private final Environment GLOBAL_ENV = new Environment();
+    Environment env = GLOBAL_ENV;
+
+    public Interpreter(List<Stmt> statements) {
+        GLOBAL_ENV.define("clock", new ClockNative());
+        this.statements = statements;
+    }
 
     public static void interpret(List<Stmt> statements) {
         new Interpreter(statements).interpret();
@@ -59,7 +63,14 @@ public class Interpreter implements Visitor<Object> {
 
     @Override
     public Object accept(Call call) {
-        return null;
+        Object callee = call.getCallee().accept(this);
+        List<Object> args = call.getArgs().stream().map(e -> e.accept(this)).toList();
+        if (callee instanceof Callable callable) {
+            if (callable.arity() != args.size())
+                throw new RuntimeException("Expected %d arguments, got %d.".formatted(callable.arity(), args.size()));
+            return callable.call(this, args);
+        }
+        throw new RuntimeException(callee.getClass().getName() + " is not a function.");
     }
 
     @Override
@@ -116,7 +127,8 @@ public class Interpreter implements Visitor<Object> {
     public Object accept(If anIf) {
         boolean res = (boolean) anIf.getCondition().accept(this);
         if (res) return anIf.getOnTrue().accept(this);
-        else return anIf.getOnFalse().accept(this);
+        if (anIf.getOnFalse() != null) return anIf.getOnFalse().accept(this);
+        return null;
     }
 
     @Override
@@ -134,7 +146,20 @@ public class Interpreter implements Visitor<Object> {
         return null;
     }
 
-    private void executeBlock(List<Stmt> statements, Environment environment) {
+    @Override
+    public Object accept(Fn fn) {
+        Function function = new Function(fn);
+        env.define(function);
+        return null;
+    }
+
+    @Override
+    public Object accept(Return aReturn) {
+        if (aReturn.getValue() == null) return null;
+        throw new ReturnVal(aReturn.getValue().accept(this));
+    }
+
+    public void executeBlock(List<Stmt> statements, Environment environment) {
         Environment prev = env;
         try {
             env = environment;

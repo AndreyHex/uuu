@@ -1,6 +1,5 @@
 package org.uuu.core.util;
 
-import org.uuu.core.ast.Call;
 import org.uuu.core.ast.Visitor;
 import org.uuu.core.ast.expression.*;
 import org.uuu.core.ast.statement.*;
@@ -88,6 +87,16 @@ public class AstPrinter implements Visitor<String> {
     @Override
     public String accept(While aWhile) {
         return "while(" + aWhile.getCondition().accept(this) + ") " + aWhile.getBody().accept(this);
+    }
+
+    @Override
+    public String accept(Fn fn) {
+        return "<fn: '" + fn.getName().getLexeme() + "'>";
+    }
+
+    @Override
+    public String accept(Return aReturn) {
+        return "return " + (aReturn.getValue() == null ? "null;" : aReturn.getValue().accept(this)) + ";";
     }
 
     private String printOperator(Token token) {

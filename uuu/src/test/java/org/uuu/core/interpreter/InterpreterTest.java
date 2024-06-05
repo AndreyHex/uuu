@@ -98,6 +98,65 @@ class InterpreterTest {
         assertEquals(55d, env.get(Token.ofIdent("a", 1, 1)));
     }
 
+    @Test
+    public void testFunction() {
+        String code = """
+                var a = 0;
+                fn increment(b) {
+                  a = a + b;
+                }
+                increment(1);
+                increment(-2);
+                increment(10);
+                increment(10);
+                """;
+        Environment env = run(code);
+        assertEquals(19d, env.get(Token.ofIdent("a", 1, 1)));
+    }
+
+    @Test
+    public void testFunctionWithReturn() {
+        String code = """
+                var a = 9;
+                var b = 60;
+                fn sum(a, b) {
+                  return a + b;
+                }
+                var x = sum(a,b);
+                """;
+        Environment env = run(code);
+        assertEquals(69d, env.get(Token.ofIdent("x", 1, 1)));
+    }
+
+    @Test
+    public void testRecursiveFibonacci() {
+        String code = """
+                fn fib(n) {
+                  if(n <= 1) return n;
+                  return fib(n-1) + fib(n-2);
+                }
+                var x = fib(10);
+                """;
+        Environment env = run(code);
+        assertEquals(55d, env.get(Token.ofIdent("x", 1, 1)));
+    }
+
+    @Test
+    public void testCurrying() {
+        String code = """
+                fn sum(a,b) { return a + b; }
+                fn curry(a) { 
+                    fn s(b) { return sum(a,b); }
+                    return s;
+                } 
+                var a = 36;
+                var b = 33;
+                var x = curry(a)(b);
+                """;
+        Environment env = run(code);
+        assertEquals(69d, env.get(Token.ofIdent("x", 1, 1)));
+    }
+
     private static Environment run(String code) {
         return new Interpreter(Parser.parse(Scanner.scan(code))).interpret().env;
     }

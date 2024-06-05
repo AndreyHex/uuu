@@ -31,4 +31,8 @@ public interface Visitor<T> {
     T accept(Logic logic);
 
     T accept(While aWhile);
+
+    T accept(Fn fn);
+
+    T accept(Return aReturn);
 }

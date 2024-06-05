@@ -10,6 +10,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Supplier;
 
+import static org.uuu.core.scanner.TokenType.*;
+
 @RequiredArgsConstructor
 public class Parser {
 
@@ -27,35 +29,64 @@ public class Parser {
     }
 
     private Stmt declaration() {
-        if (peek().getType().equals(TokenType.VAR)) return varDeclaration();
+        if (match(VAR)) return varDeclaration();
+        if (match(FN)) return fnDeclaration();
         else return statement();
     }
 
+    private Stmt fnDeclaration() {
+        pop(); // pop 'fn'
+        Token name = pop(IDENTIFIER, "Expected identifier after 'fn'.");
+        pop(LEFT_PAREN, "Expected '(' after '" + name.getLexeme() + "' name.");
+        List<Token> parameters = new ArrayList<>();
+        if (!match(RIGHT_PARENT)) parameters = parameters(new ArrayList<>());
+        pop(RIGHT_PARENT, "Expected ')' after function parameters.");
+        pop(LEFT_BRACE, "Expected '{' before function body.");
+        List<Stmt> body = stmts();
+        pop(RIGHT_BRACE, "Expected '}' after function body.");
+        return new Fn(name, parameters, body);
+    }
+
+    private List<Token> parameters(List<Token> params) {
+        if (params.size() > 254) throw new RuntimeException("Exceeded limit of parameters (254).");
+        params.add(pop());
+        if (match(COMMA)) {
+            pop();
+            return parameters(params);
+        }
+        return params;
+    }
+
+
     private Stmt varDeclaration() {
         pop(); // pop 'var'
-        Token name = pop();
-        if (!name.getType().equals(TokenType.IDENTIFIER)) throw new RuntimeException("Expected identifier after var.");
+        Token name = pop(IDENTIFIER, "Expected identifier after var.");
         Expr expr = null;
-        if (peek().getType().equals(TokenType.EQUAL)) {
+        if (match(EQUAL)) {
             pop();
             expr = expression();
         }
-        if (end() || !peek().getType().equals(TokenType.SEMICOLON))
-            throw new RuntimeException("Expected semicolon at the end of var declaration.");
-        pop();
+        pop(SEMICOLON, "Expected semicolon at the end of var declaration.");
         return new Var(name, expr);
     }
 
     private Stmt statement() {
-        if (peek().getType().equals(TokenType.LEFT_BRACE)) return block();
-        if (peek().getType().equals(TokenType.IF)) return ifStmt();
-        if (peek().getType().equals(TokenType.WHILE)) return whileStmt();
-        if (peek().getType().equals(TokenType.FOR)) return forStmt();
+        if (match(LEFT_BRACE)) return block();
+        if (match(IF)) return ifStmt();
+        if (match(WHILE)) return whileStmt();
+        if (match(FOR)) return forStmt();
+        if (match(RETURN)) return returnStmt();
         ExprStmt exprStmt = new ExprStmt(exprStmt());
-        if (!peek().getType().equals(TokenType.SEMICOLON))
-            throw new RuntimeException("Expected semicolon at the end of the statement.");
-        pop();
+        pop(SEMICOLON, "Expected semicolon at the end of the statement.");
         return exprStmt;
+    }
+
+    private Stmt returnStmt() {
+        pop(RETURN, "");
+        Expr val = null;
+        if (!match(SEMICOLON)) val = expression();
+        pop(SEMICOLON, "Expecting ';' at the end of return statement.");
+        return new Return(val);
     }
 
     private Expr exprStmt() {
@@ -71,9 +102,10 @@ public class Parser {
 
     private Stmt ifStmt() {
         pop(); // pop if
-        if (!pop().getType().equals(TokenType.LEFT_PAREN)) throw new RuntimeException("Expected left paren.");
+        pop(LEFT_PAREN, "Expected left paren.");
         Expr condition = expression();
-        if (!pop().getType().equals(TokenType.RIGHT_PARENT)) throw new RuntimeException("Expected right paren.");
+        pop(RIGHT_PARENT, "Expected right paren.");
+
         Stmt onTrue = statement();
         if (peek().getType().equals(TokenType.ELSE)) {
             pop();
@@ -85,16 +117,16 @@ public class Parser {
 
     private Stmt whileStmt() {
         pop(); // pop while
-        if (!pop().getType().equals(TokenType.LEFT_PAREN)) throw new RuntimeException("Expected left paren.");
+        pop(LEFT_PAREN, "Expected left paren.");
         Expr condition = expression();
-        if (!pop().getType().equals(TokenType.RIGHT_PARENT)) throw new RuntimeException("Expected right paren.");
+        pop(RIGHT_PARENT, "Expected right paren.");
         Stmt body = statement();
         return new While(condition, body);
     }
 
     private Stmt forStmt() {
         pop(); // pop for
-        if (!pop().getType().equals(TokenType.LEFT_PAREN)) throw new RuntimeException("Expected '(' after 'for'.");
+        pop(LEFT_PAREN, "Expected '(' after 'for'.");
 
         Stmt initializer;
         Expr condition = null;
@@ -104,11 +136,10 @@ public class Parser {
         else if (peek().getType().equals(TokenType.VAR)) initializer = varDeclaration();
         else initializer = new ExprStmt(exprStmt());
 
-        if (!peek().getType().equals(TokenType.RIGHT_PARENT)) condition = expression();
-        if (!pop().getType().equals(TokenType.SEMICOLON)) throw new RuntimeException("Expected ';' after condition.");
-        if (!peek().getType().equals(TokenType.RIGHT_PARENT)) increment = exprStmt();
-        if (!pop().getType().equals(TokenType.RIGHT_PARENT))
-            throw new RuntimeException("Expected ')' after 'for' clauses");
+        if (!peek().getType().equals(RIGHT_PARENT)) condition = expression();
+        pop(SEMICOLON, "Expected ';' after condition.");
+        if (!peek().getType().equals(RIGHT_PARENT)) increment = exprStmt();
+        pop(RIGHT_PARENT, "Expected ')' after 'for' clauses");
         Stmt body = statement();
 
         // transform to while loop
@@ -121,22 +152,23 @@ public class Parser {
 
     private Stmt block() {
         pop(); // pop open brace
-        List<Stmt> statements = new ArrayList<>();
-        while (!end() && !peek().getType().equals(TokenType.RIGHT_BRACE)) statements.add(declaration());
-        Token pop = pop();
-        if (!pop.getType().equals(TokenType.RIGHT_BRACE))
-            throw new RuntimeException("Unexpected symbol at the end of the block.");
+        List<Stmt> statements = stmts();
+        pop(RIGHT_BRACE, "Unexpected symbol at the end of the block.");
         return new Block(statements);
     }
 
+    private List<Stmt> stmts() {
+        List<Stmt> statements = new ArrayList<>();
+        while (!end() && !peek().getType().equals(TokenType.RIGHT_BRACE)) statements.add(declaration());
+        return statements;
+    }
 
     private Expr expression() {
         Expr expr = or();
         if (match(TokenType.QUESTION)) {
             pop();
             Expr onTrue = expression();
-            if (!match(TokenType.COLON)) throw new RuntimeException("Expected colon");
-            pop();
+            pop(COLON, "Expected colon.");
             Expr onFalse = expression();
             expr = new Ternary(expr, onTrue, onFalse);
         }
@@ -184,7 +216,33 @@ public class Parser {
             Token operator = pop();
             Expr right = unary();
             return new Unary(operator, right);
-        } else return primary();
+        } else return call();
+    }
+
+    private Expr call() {
+        Expr callee = primary();
+        return call(callee);
+    }
+
+    private Expr call(Expr expr) {
+        if (match(LEFT_PAREN)) {
+            pop();
+            List<Expr> arguments = new ArrayList<>();
+            if (!match(RIGHT_PARENT)) arguments = arguments(arguments);
+            Token paren = pop(RIGHT_PARENT, "Expected ')' after arguments.");
+            return call(new Call(paren, expr, arguments));
+        }
+        return expr;
+    }
+
+    private List<Expr> arguments(List<Expr> args) {
+        if (args.size() > 254) throw new RuntimeException("Exceeded limit of arguments (254).");
+        args.add(expression());
+        if (match(COMMA)) {
+            pop();
+            return arguments(args);
+        }
+        return args;
     }
 
     private Expr primary() {
@@ -199,9 +257,9 @@ public class Parser {
 
         if (pop.getType().equals(TokenType.IDENTIFIER)) return new Variable(pop);
 
-        if (pop.getType().equals(TokenType.LEFT_PAREN)) {
+        if (pop.getType().equals(LEFT_PAREN)) {
             Expr grouped = expression();
-            if (!pop().getType().equals(TokenType.RIGHT_PARENT)) throw new RuntimeException("Expected ')'");
+            pop(RIGHT_PARENT, "Expected ')'");
             return new Group(grouped);
         }
         throw new RuntimeException("Unexpected symbol at " + pop.getLine() + "|" + pop.getPos());
@@ -215,6 +273,11 @@ public class Parser {
             left = new Binary(operator, left, right);
         }
         return left;
+    }
+
+    private Token pop(TokenType type, String error) {
+        if (!match(type)) throw new RuntimeException(error + " %d|%d".formatted(peek().getLine(), peek().getPos()));
+        return pop();
     }
 
     private Token pop() {

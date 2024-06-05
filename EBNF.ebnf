@@ -12,20 +12,23 @@ symbol = "[" | "]" | "{" | "}" | "(" | ")" | "<" | ">"
        | "+" | "*" | "?" | "\n" | "\t" | "\r" | "\f" | "\b" ;
 character = letter | digit | symbol | " " ;
 
-number = [ "-" ], digit, { digit }, [ ".", digit + ] ;
+number = [ "-" ], digit +, [ ".", digit + ] ;
 string = '"', { character }, '"' ;
 identifier = letter | "_", { letter | digit | "_" | "-" } ;
 boolean = "true" | "false" ;
 null = "null" ;
 
 program     = { declaration }, EOF ;
-declaration = statement | var-decl ;
-statement   = if | while | block | ( expr-stmt, ";" ) ;
+declaration = statement | var-decl | fn-decl ;
+statement   = if | while | block | ( expr-stmt, ";" ) | return ;
+block       = "{", declaration + , "}"
 if          = "if", "(", expression, ")", statement, ( "else", statement ) ? ;
 while       = "while", "(", expression, ")", statement ;
 for         = "for", "(", ( expression | var-decl | ";" ), expression ?, ";", expr-stmt ?, ";", ")", statement ;
-block       = "{", declaration + , "}"
+return      = "return", expression ?, "
 var-decl    = "var", identifier, ( "=", expression ) ?, ";" ;
+fn-decl     = "fn", identifier, "(", { parameter }, ")" block ;
+parameter   = TODO ??
 assignment  = identifier, "=", expr-stmt ;
 expr-stmt  = assignment | expression ;
 expression = logic-or | ternary ;
@@ -36,7 +39,9 @@ equality   = comparison, { ( "!=" | "==" ), comparison } ;
 comparison = term, { ( ">" | "<" | ">=" | "<=" ), term } ;
 term       = factor, { ( "+" | "-" ), factor } ;
 factor     = unary, { ( "/" | "*" ), unary } ;  (* make it left recursive? *)
-unary      = ( "!" | "-" ), unary | primary ;
+unary      = ( "!" | "-" ), unary | call ;
+call       = primary ( "(",  arguments ?, ")" ) + ;
+arguments  = expression, { ",", expression } ;
 primary    = number | string | boolean | null | ( "(", expression, ")" ) | identifier ;
 
 

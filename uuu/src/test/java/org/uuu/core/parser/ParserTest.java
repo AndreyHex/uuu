@@ -7,6 +7,7 @@ import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.ArgumentsProvider;
 import org.junit.jupiter.params.provider.ArgumentsSource;
 import org.uuu.core.ast.expression.Assign;
+import org.uuu.core.ast.expression.Call;
 import org.uuu.core.ast.statement.*;
 import org.uuu.core.scanner.Scanner;
 import org.uuu.core.util.AstPrinter;
@@ -92,6 +93,15 @@ class ParserTest {
         assertThrows(RuntimeException.class, () -> Parser.parse(new Scanner("var test").scan()));
         assertThrows(RuntimeException.class, () -> Parser.parse(new Scanner("var test 2 + 2").scan()));
         assertThrows(RuntimeException.class, () -> Parser.parse(new Scanner("var test = 23").scan()));
+    }
+
+    @Test
+    public void testFunctionCall() {
+        List<Stmt> parse = Parser.parse(Scanner.scan("some_function(arg, arg_two)(three);"));
+        assertEquals(1, parse.size());
+        assertInstanceOf(ExprStmt.class, parse.get(0));
+        ExprStmt exprStmt = (ExprStmt) parse.get(0);
+        assertInstanceOf(Call.class, exprStmt.getExpression());
     }
 
     private static class TestCasesSource implements ArgumentsProvider {
