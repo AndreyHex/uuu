@@ -17,17 +17,6 @@ public class Environment {
         enclosing = null;
     }
 
-    public void assign(Token name, Object val) {
-        if (variables.containsKey(name.getLexeme())) {
-            variables.put(name.getLexeme(), val);
-            return;
-        } else if (enclosing != null) {
-            enclosing.assign(name, val);
-            return;
-        }
-        throw new RuntimeException("Undefined variable '" + name.getLexeme() + "'.");
-    }
-
     public void define(Function fn) {
         define(fn.getDeclaration().getName(), fn);
     }
@@ -44,5 +33,20 @@ public class Environment {
         if (variables.containsKey(token.getLexeme())) return variables.get(token.getLexeme());
         if (enclosing != null) return enclosing.get(token);
         throw new RuntimeException("Undefined variable '" + token.getLexeme() + "'.");
+    }
+
+    public Object get(Token token, int d) {
+        if (d == 0 && !variables.containsKey(token.getLexeme())) return null;
+        else if (d == 0) return variables.get(token.getLexeme());
+        if (enclosing == null) return null;
+        return enclosing.get(token, d - 1);
+    }
+
+    public void assign(Token name, Object value, Integer d) {
+        if (d == 0 && !variables.containsKey(name.getLexeme()))
+            throw new RuntimeException("Undefined variable '" + name.getLexeme() + "'.");
+        else if (d == 0) variables.put(name.getLexeme(), value);
+        else if (enclosing == null) throw new RuntimeException("idk");
+        else enclosing.assign(name, value, d - 1);
     }
 }

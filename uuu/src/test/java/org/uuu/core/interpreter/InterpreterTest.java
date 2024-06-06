@@ -13,8 +13,18 @@ class InterpreterTest {
 
     @Test
     public void testUndefinedVariable() {
-        assertThrows(RuntimeException.class, () -> Interpreter.interpret(Parser.parse(Scanner.scan("a = g + 2;"))));
-        assertThrows(RuntimeException.class, () -> Interpreter.interpret(Parser.parse(Scanner.scan("a = 3 + 2;"))));
+        assertThrows(RuntimeException.class, () -> run("a = g + 2;"));
+        assertThrows(RuntimeException.class, () -> run("a = 3 + 2;"));
+    }
+
+    @Test
+    public void testDoubleDeclaration() {
+        assertThrows(RuntimeException.class, () -> run("var a = 1; var a = 69;"));
+    }
+
+    @Test
+    public void testInvalidCode() {
+        assertThrows(RuntimeException.class, () -> run("var a = 2; return a;"));
     }
 
     @Test
@@ -129,6 +139,38 @@ class InterpreterTest {
     }
 
     @Test
+    public void testFunctionCallBeforeDeclaration() { //TODO :(
+        String code = """
+                var x = test();
+                fn test() {
+                  return 69;
+                }
+                """;
+        Environment env = run(code);
+        assertEquals(69d, env.get(Token.ofIdent("x", 1, 1)));
+    }
+
+    @Test
+    public void testNestedFunction() {
+        String code = """
+                fn test() {
+                  var i = 0;
+                  fn add() {
+                    i = i + 1;
+                    return i;
+                  }
+                  return add;
+                }
+                var f = test();
+                f();
+                f();
+                var x = f();
+                """;
+        Environment env = run(code);
+        assertEquals(3d, env.get(Token.ofIdent("x", 1, 1)));
+    }
+
+    @Test
     public void testRecursiveFibonacci() {
         String code = """
                 fn fib(n) {
@@ -145,16 +187,33 @@ class InterpreterTest {
     public void testCurrying() {
         String code = """
                 fn sum(a,b) { return a + b; }
-                fn curry(a) { 
+                fn curry(a) {
                     fn s(b) { return sum(a,b); }
                     return s;
-                } 
+                }
                 var a = 36;
                 var b = 33;
                 var x = curry(a)(b);
                 """;
         Environment env = run(code);
         assertEquals(69d, env.get(Token.ofIdent("x", 1, 1)));
+    }
+
+    @Test
+    public void testScopes() {
+        String code = """
+                var a = 1;
+                var x;
+                {
+                  fn test() {
+                    return a;
+                  }
+                  var a = 69;
+                  x = test();
+                }
+                """;
+        Environment env = run(code);
+        assertEquals(1d, env.get(Token.ofIdent("x", 1, 1)));
     }
 
     private static Environment run(String code) {

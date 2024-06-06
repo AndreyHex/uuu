@@ -1,25 +1,33 @@
 package org.uuu.core.interpreter;
 
+import org.uuu.core.analyser.ScopeResolver;
 import org.uuu.core.ast.Visitor;
 import org.uuu.core.ast.expression.*;
 import org.uuu.core.ast.statement.*;
 import org.uuu.core.runtime.Environment;
 import org.uuu.core.runtime.ReturnVal;
+import org.uuu.core.scanner.Token;
 import org.uuu.core.scanner.TokenType;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 
 public class Interpreter implements Visitor<Object> {
 
     private final List<Stmt> statements;
 
+    private final Map<Expr, Integer> LOCALS = new HashMap<>();
     private final Environment GLOBAL_ENV = new Environment();
     Environment env = GLOBAL_ENV;
 
     public Interpreter(List<Stmt> statements) {
         GLOBAL_ENV.define("clock", new ClockNative());
+        GLOBAL_ENV.define("print", new PrintNative());
         this.statements = statements;
+        ScopeResolver scopeResolver = new ScopeResolver(this);
+        statements.forEach(e -> e.accept(scopeResolver));
     }
 
     public static void interpret(List<Stmt> statements) {
@@ -34,7 +42,13 @@ public class Interpreter implements Visitor<Object> {
     @Override
     public Object accept(Assign assign) {
         Object value = evaluate(assign.getValue());
-        env.assign(assign.getName(), value);
+        Integer d = LOCALS.get(assign);
+        if (d == null) {
+            Token name = assign.getName();
+            throw new RuntimeException("Undefined variable '%s' at %d|%d".formatted(name.getLexeme(),
+                                                                                    name.getLine(), name.getPos()));
+        }
+        env.assign(assign.getName(), value, d);
         return value;
     }
 
@@ -114,7 +128,7 @@ public class Interpreter implements Visitor<Object> {
 
     @Override
     public Object accept(Variable variable) {
-        return env.get(variable.getName());
+        return lookUp(variable.getName(), variable);
     }
 
     @Override
@@ -148,7 +162,7 @@ public class Interpreter implements Visitor<Object> {
 
     @Override
     public Object accept(Fn fn) {
-        Function function = new Function(fn);
+        Function function = new Function(fn, env);
         env.define(function);
         return null;
     }
@@ -157,6 +171,14 @@ public class Interpreter implements Visitor<Object> {
     public Object accept(Return aReturn) {
         if (aReturn.getValue() == null) return null;
         throw new ReturnVal(aReturn.getValue().accept(this));
+    }
+
+    private Object lookUp(Token name, Expr expr) {
+        Integer d = LOCALS.get(expr);
+        if (d != null) return env.get(name, d);
+        else throw new RuntimeException("Cant resolve variable %s from %d|%d.".formatted(name.getLexeme(),
+                                                                                         name.getLine(),
+                                                                                         name.getPos()));
     }
 
     public void executeBlock(List<Stmt> statements, Environment environment) {
@@ -171,5 +193,9 @@ public class Interpreter implements Visitor<Object> {
 
     private Object evaluate(Expr expr) {
         return expr.accept(this);
+    }
+
+    public void resolve(Expr expr, int i) {
+        LOCALS.put(expr, i);
     }
 }

@@ -12,10 +12,11 @@ import java.util.List;
 @RequiredArgsConstructor
 public class Function implements Callable {
     private final Fn declaration;
+    private final Environment closure;
 
     @Override
     public Object call(Interpreter interpreter, List<Object> args) {
-        Environment env = new Environment(interpreter.env);
+        Environment env = new Environment(closure);
         for (int i = 0; i < args.size(); i++) env.define(declaration.getParams().get(i), args.get(i));
         try {
             interpreter.executeBlock(declaration.getBody(), env);
