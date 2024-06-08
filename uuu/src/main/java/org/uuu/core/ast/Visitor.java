@@ -35,4 +35,12 @@ public interface Visitor<T> {
     T accept(Fn fn);
 
     T accept(Return aReturn);
+
+    T accept(ClassStmt aClass);
+
+    T accept(Get get);
+
+    T accept(Set set);
+
+    T accept(Self self);
 }

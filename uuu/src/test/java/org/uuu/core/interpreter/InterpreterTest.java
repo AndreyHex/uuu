@@ -216,6 +216,68 @@ class InterpreterTest {
         assertEquals(1d, env.get(Token.ofIdent("x", 1, 1)));
     }
 
+    @Test
+    public void testClasses() {
+        String code = """
+                class Test {
+                  fn test() {
+                    return self.test_two();
+                  }
+                  fn test_two() {
+                    return 33;
+                  }
+                }
+                var t = Test();
+                var x = t.test();
+                """;
+        Environment env = run(code);
+        assertEquals(33d, env.get(Token.ofIdent("x", 1, 1)));
+    }
+
+    @Test
+    public void testClassInitArgs() {
+        String code = """
+                class Test {
+                  fn init(a,b) {
+                    self.a = a;
+                    self.b = b;
+                  }
+                  fn getA() {
+                    return self.a;
+                  }
+                  fn getB() {
+                    return self.b;
+                  }
+                }
+                var t = Test(33, 69);
+                var x = t.getA();
+                var xx = t.getB();
+                """;
+        Environment env = run(code);
+        assertEquals(33d, env.get(Token.ofIdent("x", 1, 1)));
+        assertEquals(69d, env.get(Token.ofIdent("xx", 1, 1)));
+    }
+
+    @Test
+    public void testClassInit() {
+        String code = """
+                class Test {
+                  fn init() {
+                    self.a = 69;
+                  }
+                  fn get() {
+                    return self.a;
+                  }
+                }
+                var t = Test();
+                var x = t.get();
+                var xx = t.a;
+                """;
+        Environment env = run(code);
+        assertEquals(69d, env.get(Token.ofIdent("x", 1, 1)));
+        assertEquals(69d, env.get(Token.ofIdent("xx", 1, 1)));
+    }
+
     private static Environment run(String code) {
         return new Interpreter(Parser.parse(Scanner.scan(code))).interpret().env;
     }

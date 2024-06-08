@@ -31,10 +31,23 @@ public class Parser {
     private Stmt declaration() {
         if (match(VAR)) return varDeclaration();
         if (match(FN)) return fnDeclaration();
+        if (match(CLASS)) return classDeclaration();
         else return statement();
     }
 
-    private Stmt fnDeclaration() {
+    private Stmt classDeclaration() {
+        pop(CLASS, "");
+        Token name = pop(IDENTIFIER, "Expected class name.");
+        pop(LEFT_BRACE, "Expected '{' at the beginning of class body.");
+
+        List<Fn> methods = new ArrayList<>();
+        while (!end() && !peek().getType().equals(RIGHT_BRACE)) methods.add(fnDeclaration());
+
+        pop(RIGHT_BRACE, "Expected '}' at the end of class body.");
+        return new ClassStmt(name, methods);
+    }
+
+    private Fn fnDeclaration() {
         pop(); // pop 'fn'
         Token name = pop(IDENTIFIER, "Expected identifier after 'fn'.");
         pop(LEFT_PAREN, "Expected '(' after '" + name.getLexeme() + "' name.");
@@ -95,6 +108,7 @@ public class Parser {
             pop(); //equals
             Expr value = expression();
             if (expr instanceof Variable variable) expr = new Assign(variable.getName(), value);
+            else if (expr instanceof Get get) expr = new Set(get.getName(), get.getObject(), value);
             else throw new RuntimeException("Invalid assignment.");
         }
         return expr;
@@ -231,6 +245,10 @@ public class Parser {
             if (!match(RIGHT_PARENT)) arguments = arguments(arguments);
             Token paren = pop(RIGHT_PARENT, "Expected ')' after arguments.");
             return call(new Call(paren, expr, arguments));
+        } else if (match(DOT)) {
+            pop(DOT, "");
+            Token name = pop(IDENTIFIER, "Expected identifier after '.'.");
+            return call(new Get(name, expr));
         }
         return expr;
     }
@@ -255,7 +273,8 @@ public class Parser {
             default: break;
         }
 
-        if (pop.getType().equals(TokenType.IDENTIFIER)) return new Variable(pop);
+        if (pop.getType().equals(SELF)) return new Self(pop);
+        if (pop.getType().equals(IDENTIFIER)) return new Variable(pop);
 
         if (pop.getType().equals(LEFT_PAREN)) {
             Expr grouped = expression();

@@ -13,7 +13,7 @@ public class Token {
     private final int pos;
 
     public static Token ofType(TokenType type, int line, int pos) {
-        return new Token(type, "", null, line, pos);
+        return new Token(type, type.name().toLowerCase(), null, line, pos);
     }
 
     public static Token ofNumber(double value, int line, int pos) {

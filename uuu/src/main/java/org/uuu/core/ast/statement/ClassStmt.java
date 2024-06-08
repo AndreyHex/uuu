@@ -9,17 +9,12 @@ import java.util.List;
 
 @Data
 @RequiredArgsConstructor
-public class Fn extends Stmt {
+public class ClassStmt extends Stmt {
     private final Token name;
-    private final List<Token> params;
-    private final List<Stmt> body;
+    private final List<Fn> methods;
 
     @Override
     public <T> T accept(Visitor<T> visitor) {
         return visitor.accept(this);
-    }
-
-    public String getLexeme() {
-        return name.getLexeme();
     }
 }

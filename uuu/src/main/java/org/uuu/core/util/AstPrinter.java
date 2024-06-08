@@ -99,6 +99,26 @@ public class AstPrinter implements Visitor<String> {
         return "return " + (aReturn.getValue() == null ? "null;" : aReturn.getValue().accept(this)) + ";";
     }
 
+    @Override
+    public String accept(ClassStmt aClass) {
+        return "";
+    }
+
+    @Override
+    public String accept(Get get) {
+        return "";
+    }
+
+    @Override
+    public String accept(Set set) {
+        return "";
+    }
+
+    @Override
+    public String accept(Self self) {
+        return "";
+    }
+
     private String printOperator(Token token) {
         return switch (token.getType()) {
             case BANG -> "!";

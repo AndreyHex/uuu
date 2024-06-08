@@ -36,8 +36,12 @@ public class Environment {
     }
 
     public Object get(Token token, int d) {
-        if (d == 0 && !variables.containsKey(token.getLexeme())) return null;
-        else if (d == 0) return variables.get(token.getLexeme());
+        return get(token.getLexeme(), d);
+    }
+
+    public Object get(String token, int d) {
+        if (d == 0 && !variables.containsKey(token)) return null;
+        else if (d == 0) return variables.get(token);
         if (enclosing == null) return null;
         return enclosing.get(token, d - 1);
     }

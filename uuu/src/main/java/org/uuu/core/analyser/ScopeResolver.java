@@ -51,7 +51,6 @@ public class ScopeResolver implements Visitor<Void> {
                 interpreter.resolve(expr, scopes.size() - 1 - i);
                 return;
             }
-
     }
 
     private void resolve(Fn fn) {
@@ -169,6 +168,36 @@ public class ScopeResolver implements Visitor<Void> {
     @Override
     public Void accept(Return aReturn) {
         if (aReturn.getValue() != null) aReturn.getValue().accept(this);
+        return null;
+    }
+
+    @Override
+    public Void accept(ClassStmt aClass) {
+        declare(aClass.getName());
+        define(aClass.getName());
+        beginScope();
+        scopes.peek().put("self", true);
+        aClass.getMethods().forEach(this::resolve);
+        endScope();
+        return null;
+    }
+
+    @Override
+    public Void accept(Get get) {
+        get.getObject().accept(this);
+        return null;
+    }
+
+    @Override
+    public Void accept(Set set) {
+        set.getValue().accept(this);
+        set.getObject().accept(this);
+        return null;
+    }
+
+    @Override
+    public Void accept(Self self) {
+        resolve(self, self.getKeyword());
         return null;
     }
 }

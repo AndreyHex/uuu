@@ -13,6 +13,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 public class Interpreter implements Visitor<Object> {
 
@@ -171,6 +172,38 @@ public class Interpreter implements Visitor<Object> {
     public Object accept(Return aReturn) {
         if (aReturn.getValue() == null) return null;
         throw new ReturnVal(aReturn.getValue().accept(this));
+    }
+
+    @Override
+    public Object accept(ClassStmt aClass) {
+        env.define(aClass.getName(), null);
+        Map<String, Function> methods = aClass.getMethods().stream()
+                .collect(Collectors.toMap(Fn::getLexeme, a -> Callable.function(a, env)));
+        env.assign(aClass.getName(), new Class(aClass.getName(), methods), 0);
+        return null;
+    }
+
+    @Override
+    public Object accept(Get get) {
+        Object accept = get.getObject().accept(this);
+        if (accept instanceof Instance instance) return instance.get(get.getName());
+        throw new RuntimeException("Not an instance: '%s'.".formatted(get.getName().getLexeme()));
+    }
+
+    @Override
+    public Object accept(Set set) {
+        Object obj = set.getObject().accept(this);
+        if (obj instanceof Instance instance) {
+            Object val = set.getValue().accept(this);
+            instance.set(set.getName(), val);
+            return null;
+        }
+        throw new RuntimeException("Expecting instance.");
+    }
+
+    @Override
+    public Object accept(Self self) {
+        return lookUp(self.getKeyword(), self);
     }
 
     private Object lookUp(Token name, Expr expr) {

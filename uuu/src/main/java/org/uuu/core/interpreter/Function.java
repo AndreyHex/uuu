@@ -5,6 +5,7 @@ import lombok.RequiredArgsConstructor;
 import org.uuu.core.ast.statement.Fn;
 import org.uuu.core.runtime.Environment;
 import org.uuu.core.runtime.ReturnVal;
+import org.uuu.core.scanner.Token;
 
 import java.util.List;
 
@@ -33,5 +34,15 @@ public class Function implements Callable {
 
     public String toString() {
         return "<fn:" + declaration.getName().getLexeme() + ">";
+    }
+
+    public Function bind(Instance instance) {
+//        Environment env = new Environment(closure);
+//        env.define(Token.ofIdent("self", 0, 0), instance);
+//        return new Function(declaration, env);
+        // why not define self in existed closure
+        // works fine
+        closure.define(Token.ofIdent("self", 0, 0), instance);
+        return this;
     }
 }

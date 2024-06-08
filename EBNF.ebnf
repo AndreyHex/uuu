@@ -27,9 +27,9 @@ while       = "while", "(", expression, ")", statement ;
 for         = "for", "(", ( expression | var-decl | ";" ), expression ?, ";", expr-stmt ?, ";", ")", statement ;
 return      = "return", expression ?, "
 var-decl    = "var", identifier, ( "=", expression ) ?, ";" ;
-fn-decl     = "fn", identifier, "(", { parameter }, ")" block ;
-parameter   = TODO ??
-assignment  = identifier, "=", expr-stmt ;
+fn-decl     = "fn", identifier, "(", { identifier }, ")" block ;
+class-decl  = "class", identifier, "{", { fn-decl }, "}" ;
+assignment  = ( call, "." ) ?, identifier, "=", expr-stmt ;
 expr-stmt  = assignment | expression ;
 expression = logic-or | ternary ;
 logic-or   = logic-and, { "|", logic-and } ;
@@ -40,7 +40,7 @@ comparison = term, { ( ">" | "<" | ">=" | "<=" ), term } ;
 term       = factor, { ( "+" | "-" ), factor } ;
 factor     = unary, { ( "/" | "*" ), unary } ;  (* make it left recursive? *)
 unary      = ( "!" | "-" ), unary | call ;
-call       = primary ( "(",  arguments ?, ")" ) + ;
+call       = primary ( ( "(",  arguments ?, ")" ) | ( ".", identifier ) ) + ;
 arguments  = expression, { ",", expression } ;
 primary    = number | string | boolean | null | ( "(", expression, ")" ) | identifier ;
 
