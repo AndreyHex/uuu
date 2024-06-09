@@ -45,4 +45,10 @@ public interface Visitor<T> {
     T accept(Self self);
 
     T accept(Super aSuper);
+
+    T accept(BreakStmt breakStmt);
+
+    T accept(ContinueStmt continueStmt);
+
+    T accept(For aFor);
 }

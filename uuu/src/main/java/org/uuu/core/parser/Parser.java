@@ -94,9 +94,13 @@ public class Parser {
         if (match(WHILE)) return whileStmt();
         if (match(FOR)) return forStmt();
         if (match(RETURN)) return returnStmt();
-        ExprStmt exprStmt = new ExprStmt(exprStmt());
+
+        Stmt stmt;
+        if (match(BREAK)) stmt = new BreakStmt(pop());
+        else if (match(CONTINUE)) stmt = new ContinueStmt(pop());
+        else stmt = new ExprStmt(exprStmt());
         pop(SEMICOLON, "Expected semicolon at the end of the statement.");
-        return exprStmt;
+        return stmt;
     }
 
     private Stmt returnStmt() {
@@ -161,12 +165,7 @@ public class Parser {
         pop(RIGHT_PARENT, "Expected ')' after 'for' clauses");
         Stmt body = statement();
 
-        // transform to while loop
-        if (increment != null) body = new Block(List.of(body, new ExprStmt(increment)));
-        if (condition != null) body = new While(condition, body);
-        else body = new While(new Literal(true), body);
-        if (initializer != null) body = new Block(List.of(initializer, body));
-        return body;
+        return new For(initializer, condition, increment, body);
     }
 
     private Stmt block() {

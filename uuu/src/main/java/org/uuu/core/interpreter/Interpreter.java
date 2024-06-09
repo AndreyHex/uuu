@@ -4,6 +4,8 @@ import org.uuu.core.analyser.ScopeResolver;
 import org.uuu.core.ast.Visitor;
 import org.uuu.core.ast.expression.*;
 import org.uuu.core.ast.statement.*;
+import org.uuu.core.runtime.Break;
+import org.uuu.core.runtime.Continue;
 import org.uuu.core.runtime.Environment;
 import org.uuu.core.runtime.ReturnVal;
 import org.uuu.core.scanner.Token;
@@ -157,7 +159,25 @@ public class Interpreter implements Visitor<Object> {
 
     @Override
     public Object accept(While aWhile) {
-        while ((boolean) aWhile.getCondition().accept(this)) aWhile.getBody().accept(this);
+        while ((boolean) aWhile.getCondition().accept(this)) try {
+            aWhile.getBody().accept(this);
+        } catch (Break ignore) {
+            break;
+        } catch (Continue ignore) {}
+        return null;
+    }
+
+    @Override
+    public Object accept(For aFor) {
+        aFor.getInitializer().accept(this);
+        while ((boolean) aFor.getCondition().accept(this)) {
+            try {
+                aFor.getBody().accept(this);
+            } catch (Break ignore) {
+                break;
+            } catch (Continue ignore) {}
+            aFor.getIncrement().accept(this);
+        }
         return null;
     }
 
@@ -227,6 +247,16 @@ public class Interpreter implements Visitor<Object> {
         if (method == null)
             throw new RuntimeException("Undefined property '%s'.".formatted(aSuper.getMethod().getLexeme()));
         return method.bind(th);
+    }
+
+    @Override
+    public Object accept(BreakStmt breakStmt) {
+        throw new Break();
+    }
+
+    @Override
+    public Object accept(ContinueStmt continueStmt) {
+        throw new Continue();
     }
 
     private Object lookUp(Token name, Expr expr) {

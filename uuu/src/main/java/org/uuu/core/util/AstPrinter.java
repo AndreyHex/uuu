@@ -124,6 +124,21 @@ public class AstPrinter implements Visitor<String> {
         return "";
     }
 
+    @Override
+    public String accept(BreakStmt breakStmt) {
+        return "";
+    }
+
+    @Override
+    public String accept(ContinueStmt continueStmt) {
+        return "";
+    }
+
+    @Override
+    public String accept(For aFor) {
+        return "";
+    }
+
     private String printOperator(Token token) {
         return switch (token.getType()) {
             case BANG -> "!";

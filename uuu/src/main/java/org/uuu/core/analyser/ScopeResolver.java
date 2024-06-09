@@ -215,4 +215,23 @@ public class ScopeResolver implements Visitor<Void> {
         resolve(aSuper, aSuper.getKeyword());
         return null;
     }
+
+    @Override
+    public Void accept(BreakStmt breakStmt) {
+        return null;
+    }
+
+    @Override
+    public Void accept(ContinueStmt continueStmt) {
+        return null;
+    }
+
+    @Override
+    public Void accept(For aFor) {
+        aFor.getInitializer().accept(this);
+        aFor.getCondition().accept(this);
+        aFor.getIncrement().accept(this);
+        aFor.getBody().accept(this);
+        return null;
+    }
 }

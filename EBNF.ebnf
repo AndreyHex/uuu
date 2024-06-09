@@ -42,6 +42,7 @@ factor     = unary, { ( "/" | "*" ), unary } ;  (* make it left recursive? *)
 unary      = ( "!" | "-" ), unary | call ;
 call       = primary ( ( "(",  arguments ?, ")" ) | ( ".", identifier ) ) + ;
 arguments  = expression, { ",", expression } ;
-primary    = number | string | boolean | null | ( "(", expression, ")" ) | identifier | "this" | "super" ;
+primary    = number | string | boolean | null | ( "(", expression, ")" ) |
+             identifier | "this" | "super" | "break" | "continue" ;
 
 

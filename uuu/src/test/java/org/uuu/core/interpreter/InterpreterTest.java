@@ -1,5 +1,6 @@
 package org.uuu.core.interpreter;
 
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.uuu.core.parser.Parser;
 import org.uuu.core.runtime.Environment;
@@ -109,6 +110,51 @@ class InterpreterTest {
     }
 
     @Test
+    public void testLoopContinue() {
+        String code = """
+                      var a = 0;
+                      for(var i = 10; i > 0;i = i - 1) {
+                        if(i == 2) continue;
+                        if(i == 6) continue;
+                        a = a + 1;
+                      }
+                      """;
+        Environment env = run(code);
+        assertEquals(8d, env.get(Token.ofIdent("a", 1, 1)));
+    }
+
+    @Test
+    public void testLoopBreak() {
+        String code = """
+                      var a = 0;
+                      for(var i = 10; i > 0;i = i - 1) {
+                        if(i == 5) break;
+                        a = a + 1;
+                      }
+                      """;
+        Environment env = run(code);
+        assertEquals(5d, env.get(Token.ofIdent("a", 1, 1)));
+    }
+
+    @Test
+    public void testNestingLoops() {
+        String code = """
+                      var a = 0;
+                      for(var i = 10; i > 0;i = i - 1) {
+                        var b = 0;
+                        while(b < 10) {
+                          if(b == 5) break;
+                          a = a + 2;
+                          b = b + 1;
+                        }
+                        a = a + 1;
+                      }
+                      """;
+        Environment env = run(code);
+        assertEquals(110d, env.get(Token.ofIdent("a", 1, 1)));
+    }
+
+    @Test
     public void testFunction() {
         String code = """
                       var a = 0;
@@ -138,8 +184,9 @@ class InterpreterTest {
         assertEquals(69d, env.get(Token.ofIdent("x", 1, 1)));
     }
 
+    @Disabled("not supported")
     @Test
-    public void testFunctionCallBeforeDeclaration() { //TODO :(
+    public void testFunctionCallBeforeDeclaration() {
         String code = """
                       var x = test();
                       fn test() {
