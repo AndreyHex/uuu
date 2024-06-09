@@ -37,12 +37,8 @@ public class Function implements Callable {
     }
 
     public Function bind(Instance instance) {
-//        Environment env = new Environment(closure);
-//        env.define(Token.ofIdent("self", 0, 0), instance);
-//        return new Function(declaration, env);
-        // why not define self in existed closure
-        // works fine
-        closure.define(Token.ofIdent("self", 0, 0), instance);
-        return this;
+        Environment env = new Environment(closure);
+        env.define(Token.ofIdent("self", 0, 0), instance);
+        return new Function(declaration, env);
     }
 }

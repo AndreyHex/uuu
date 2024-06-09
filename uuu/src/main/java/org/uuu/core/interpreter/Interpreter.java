@@ -176,10 +176,22 @@ public class Interpreter implements Visitor<Object> {
 
     @Override
     public Object accept(ClassStmt aClass) {
+        Object superclass = null;
+        if (aClass.getSuperclass() != null) {
+            superclass = aClass.getSuperclass().accept(this);
+            if (!(superclass instanceof Class cl))
+                throw new RuntimeException("'%s' is not a class.".formatted(aClass.getSuperclass().getName().getLexeme()));
+        }
         env.define(aClass.getName(), null);
+        Environment prev = env;
+        if (superclass != null) {
+            env = new Environment(env);
+            env.define("super", superclass);
+        }
         Map<String, Function> methods = aClass.getMethods().stream()
                 .collect(Collectors.toMap(Fn::getLexeme, a -> Callable.function(a, env)));
-        env.assign(aClass.getName(), new Class(aClass.getName(), methods), 0);
+        env = prev;
+        env.assign(aClass.getName(), new Class(aClass.getName(), (Class) superclass, methods), 0);
         return null;
     }
 
@@ -204,6 +216,17 @@ public class Interpreter implements Visitor<Object> {
     @Override
     public Object accept(Self self) {
         return lookUp(self.getKeyword(), self);
+    }
+
+    @Override
+    public Object accept(Super aSuper) {
+        Integer d = LOCALS.get(aSuper);
+        Class sup = (Class) env.get("super", d);
+        Instance th = (Instance) env.get("this", d - 1);
+        Function method = sup.findMethod(aSuper.getMethod());
+        if (method == null)
+            throw new RuntimeException("Undefined property '%s'.".formatted(aSuper.getMethod().getLexeme()));
+        return method.bind(th);
     }
 
     private Object lookUp(Token name, Expr expr) {

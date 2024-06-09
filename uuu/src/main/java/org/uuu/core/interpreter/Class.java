@@ -11,6 +11,7 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class Class implements Callable {
     private final Token name;
+    private final Class superclass;
     private final Map<String, Function> methods;
 
     public String toString() {
@@ -32,7 +33,9 @@ public class Class implements Callable {
     }
 
     public Function findMethod(String name) {
-        return methods.get(name);
+        if (methods.containsKey(name)) return methods.get(name);
+        if (superclass != null) return superclass.findMethod(name);
+        return null;
     }
 
     public Function findMethod(Token field) {

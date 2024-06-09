@@ -175,10 +175,19 @@ public class ScopeResolver implements Visitor<Void> {
     public Void accept(ClassStmt aClass) {
         declare(aClass.getName());
         define(aClass.getName());
+        if (aClass.getSuperclass() != null &&
+            aClass.getSuperclass().getName().getLexeme().equals(aClass.getName().getLexeme()))
+            throw new RuntimeException("Cannot inherit from itself.");
+        if (aClass.getSuperclass() != null) {
+            aClass.getSuperclass().accept(this);
+            beginScope();
+            scopes.peek().put("super", true);
+        }
         beginScope();
         scopes.peek().put("self", true);
         aClass.getMethods().forEach(this::resolve);
         endScope();
+        if (aClass.getSuperclass() != null) endScope();
         return null;
     }
 
@@ -198,6 +207,12 @@ public class ScopeResolver implements Visitor<Void> {
     @Override
     public Void accept(Self self) {
         resolve(self, self.getKeyword());
+        return null;
+    }
+
+    @Override
+    public Void accept(Super aSuper) {
+        resolve(aSuper, aSuper.getKeyword());
         return null;
     }
 }

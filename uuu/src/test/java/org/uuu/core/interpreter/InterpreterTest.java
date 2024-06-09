@@ -96,14 +96,14 @@ class InterpreterTest {
     @Test
     public void testFibonacci() {
         String code = """
-                var a = 0;
-                var b = 1;
-                for(var i = 10; i > 0;i = i - 1) {
-                    var tmp = a + b;
-                    a = b;
-                    b = tmp;
-                }
-                """;
+                      var a = 0;
+                      var b = 1;
+                      for(var i = 10; i > 0;i = i - 1) {
+                          var tmp = a + b;
+                          a = b;
+                          b = tmp;
+                      }
+                      """;
         Environment env = run(code);
         assertEquals(55d, env.get(Token.ofIdent("a", 1, 1)));
     }
@@ -111,15 +111,15 @@ class InterpreterTest {
     @Test
     public void testFunction() {
         String code = """
-                var a = 0;
-                fn increment(b) {
-                  a = a + b;
-                }
-                increment(1);
-                increment(-2);
-                increment(10);
-                increment(10);
-                """;
+                      var a = 0;
+                      fn increment(b) {
+                        a = a + b;
+                      }
+                      increment(1);
+                      increment(-2);
+                      increment(10);
+                      increment(10);
+                      """;
         Environment env = run(code);
         assertEquals(19d, env.get(Token.ofIdent("a", 1, 1)));
     }
@@ -127,13 +127,13 @@ class InterpreterTest {
     @Test
     public void testFunctionWithReturn() {
         String code = """
-                var a = 9;
-                var b = 60;
-                fn sum(a, b) {
-                  return a + b;
-                }
-                var x = sum(a,b);
-                """;
+                      var a = 9;
+                      var b = 60;
+                      fn sum(a, b) {
+                        return a + b;
+                      }
+                      var x = sum(a,b);
+                      """;
         Environment env = run(code);
         assertEquals(69d, env.get(Token.ofIdent("x", 1, 1)));
     }
@@ -141,11 +141,11 @@ class InterpreterTest {
     @Test
     public void testFunctionCallBeforeDeclaration() { //TODO :(
         String code = """
-                var x = test();
-                fn test() {
-                  return 69;
-                }
-                """;
+                      var x = test();
+                      fn test() {
+                        return 69;
+                      }
+                      """;
         Environment env = run(code);
         assertEquals(69d, env.get(Token.ofIdent("x", 1, 1)));
     }
@@ -153,19 +153,19 @@ class InterpreterTest {
     @Test
     public void testNestedFunction() {
         String code = """
-                fn test() {
-                  var i = 0;
-                  fn add() {
-                    i = i + 1;
-                    return i;
-                  }
-                  return add;
-                }
-                var f = test();
-                f();
-                f();
-                var x = f();
-                """;
+                      fn test() {
+                        var i = 0;
+                        fn add() {
+                          i = i + 1;
+                          return i;
+                        }
+                        return add;
+                      }
+                      var f = test();
+                      f();
+                      f();
+                      var x = f();
+                      """;
         Environment env = run(code);
         assertEquals(3d, env.get(Token.ofIdent("x", 1, 1)));
     }
@@ -173,12 +173,12 @@ class InterpreterTest {
     @Test
     public void testRecursiveFibonacci() {
         String code = """
-                fn fib(n) {
-                  if(n <= 1) return n;
-                  return fib(n-1) + fib(n-2);
-                }
-                var x = fib(10);
-                """;
+                      fn fib(n) {
+                        if(n <= 1) return n;
+                        return fib(n-1) + fib(n-2);
+                      }
+                      var x = fib(10);
+                      """;
         Environment env = run(code);
         assertEquals(55d, env.get(Token.ofIdent("x", 1, 1)));
     }
@@ -186,15 +186,15 @@ class InterpreterTest {
     @Test
     public void testCurrying() {
         String code = """
-                fn sum(a,b) { return a + b; }
-                fn curry(a) {
-                    fn s(b) { return sum(a,b); }
-                    return s;
-                }
-                var a = 36;
-                var b = 33;
-                var x = curry(a)(b);
-                """;
+                      fn sum(a,b) { return a + b; }
+                      fn curry(a) {
+                          fn s(b) { return sum(a,b); }
+                          return s;
+                      }
+                      var a = 36;
+                      var b = 33;
+                      var x = curry(a)(b);
+                      """;
         Environment env = run(code);
         assertEquals(69d, env.get(Token.ofIdent("x", 1, 1)));
     }
@@ -202,16 +202,16 @@ class InterpreterTest {
     @Test
     public void testScopes() {
         String code = """
-                var a = 1;
-                var x;
-                {
-                  fn test() {
-                    return a;
-                  }
-                  var a = 69;
-                  x = test();
-                }
-                """;
+                      var a = 1;
+                      var x;
+                      {
+                        fn test() {
+                          return a;
+                        }
+                        var a = 69;
+                        x = test();
+                      }
+                      """;
         Environment env = run(code);
         assertEquals(1d, env.get(Token.ofIdent("x", 1, 1)));
     }
@@ -219,17 +219,17 @@ class InterpreterTest {
     @Test
     public void testClasses() {
         String code = """
-                class Test {
-                  fn test() {
-                    return self.test_two();
-                  }
-                  fn test_two() {
-                    return 33;
-                  }
-                }
-                var t = Test();
-                var x = t.test();
-                """;
+                      class Test {
+                        fn test() {
+                          return self.test_two();
+                        }
+                        fn test_two() {
+                          return 33;
+                        }
+                      }
+                      var t = Test();
+                      var x = t.test();
+                      """;
         Environment env = run(code);
         assertEquals(33d, env.get(Token.ofIdent("x", 1, 1)));
     }
@@ -237,22 +237,22 @@ class InterpreterTest {
     @Test
     public void testClassInitArgs() {
         String code = """
-                class Test {
-                  fn init(a,b) {
-                    self.a = a;
-                    self.b = b;
-                  }
-                  fn getA() {
-                    return self.a;
-                  }
-                  fn getB() {
-                    return self.b;
-                  }
-                }
-                var t = Test(33, 69);
-                var x = t.getA();
-                var xx = t.getB();
-                """;
+                      class Test {
+                        fn init(a,b) {
+                          self.a = a;
+                          self.b = b;
+                        }
+                        fn getA() {
+                          return self.a;
+                        }
+                        fn getB() {
+                          return self.b;
+                        }
+                      }
+                      var t = Test(33, 69);
+                      var x = t.getA();
+                      var xx = t.getB();
+                      """;
         Environment env = run(code);
         assertEquals(33d, env.get(Token.ofIdent("x", 1, 1)));
         assertEquals(69d, env.get(Token.ofIdent("xx", 1, 1)));
@@ -261,21 +261,63 @@ class InterpreterTest {
     @Test
     public void testClassInit() {
         String code = """
-                class Test {
-                  fn init() {
-                    self.a = 69;
-                  }
-                  fn get() {
-                    return self.a;
-                  }
-                }
-                var t = Test();
-                var x = t.get();
-                var xx = t.a;
-                """;
+                      class Test {
+                        fn init() {
+                          self.a = 69;
+                        }
+                        fn get() {
+                          return self.a;
+                        }
+                      }
+                      var t = Test();
+                      var x = t.get();
+                      var xx = t.a;
+                      """;
         Environment env = run(code);
         assertEquals(69d, env.get(Token.ofIdent("x", 1, 1)));
         assertEquals(69d, env.get(Token.ofIdent("xx", 1, 1)));
+    }
+
+    @Test
+    public void testClassInheritance() {
+        String code = """
+                      class A {
+                        fn test() {
+                          return 69;
+                        }
+                      }
+                      class B < A {}
+                      var t = A();
+                      var x = t.test();
+                      """;
+        Environment env = run(code);
+        assertEquals(69d, env.get(Token.ofIdent("x", 1, 1)));
+    }
+
+    @Test
+    public void testClassSuper() {
+        String code = """
+                      class A {
+                        fn test() {
+                          return 69;
+                        }
+                      }
+                      class B < A {
+                       fn test() {
+                         return 42;
+                       }
+                       fn get() {
+                         return super.test();
+                       }
+                      }
+                      var a = A();
+                      var b = B();
+                      var x = b.get();
+                      var xx = b.test();
+                      """;
+        Environment env = run(code);
+        assertEquals(69d, env.get(Token.ofIdent("x", 1, 1)));
+        assertEquals(42d, env.get(Token.ofIdent("xx", 1, 1)));
     }
 
     private static Environment run(String code) {

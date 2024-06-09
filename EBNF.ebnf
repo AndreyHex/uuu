@@ -28,7 +28,7 @@ for         = "for", "(", ( expression | var-decl | ";" ), expression ?, ";", ex
 return      = "return", expression ?, "
 var-decl    = "var", identifier, ( "=", expression ) ?, ";" ;
 fn-decl     = "fn", identifier, "(", { identifier }, ")" block ;
-class-decl  = "class", identifier, "{", { fn-decl }, "}" ;
+class-decl  = "class", identifier, ( "<", identifier ) ?, "{", { fn-decl }, "}" ;
 assignment  = ( call, "." ) ?, identifier, "=", expr-stmt ;
 expr-stmt  = assignment | expression ;
 expression = logic-or | ternary ;
@@ -42,6 +42,6 @@ factor     = unary, { ( "/" | "*" ), unary } ;  (* make it left recursive? *)
 unary      = ( "!" | "-" ), unary | call ;
 call       = primary ( ( "(",  arguments ?, ")" ) | ( ".", identifier ) ) + ;
 arguments  = expression, { ",", expression } ;
-primary    = number | string | boolean | null | ( "(", expression, ")" ) | identifier ;
+primary    = number | string | boolean | null | ( "(", expression, ")" ) | identifier | "this" | "super" ;
 
 

@@ -38,13 +38,18 @@ public class Parser {
     private Stmt classDeclaration() {
         pop(CLASS, "");
         Token name = pop(IDENTIFIER, "Expected class name.");
+        Token superclass = null;
+        if (match(LESS)) {
+            pop();
+            superclass = pop(IDENTIFIER, "Expected super class identifier after '<'.");
+        }
         pop(LEFT_BRACE, "Expected '{' at the beginning of class body.");
 
         List<Fn> methods = new ArrayList<>();
         while (!end() && !peek().getType().equals(RIGHT_BRACE)) methods.add(fnDeclaration());
 
         pop(RIGHT_BRACE, "Expected '}' at the end of class body.");
-        return new ClassStmt(name, methods);
+        return new ClassStmt(name, superclass == null ? null : new Variable(superclass), methods);
     }
 
     private Fn fnDeclaration() {
@@ -274,6 +279,7 @@ public class Parser {
         }
 
         if (pop.getType().equals(SELF)) return new Self(pop);
+        if (pop.getType().equals(SUPER)) return superr(pop);
         if (pop.getType().equals(IDENTIFIER)) return new Variable(pop);
 
         if (pop.getType().equals(LEFT_PAREN)) {
@@ -282,6 +288,12 @@ public class Parser {
             return new Group(grouped);
         }
         throw new RuntimeException("Unexpected symbol at " + pop.getLine() + "|" + pop.getPos());
+    }
+
+    private Expr superr(Token pop) {
+        pop(DOT, "Expected '.' after 'super'.");
+        Token method = pop(IDENTIFIER, "Expecting superclass method name.");
+        return new Super(pop, method);
     }
 
     private Expr recurs(Supplier<Expr> sup, TokenType... types) {

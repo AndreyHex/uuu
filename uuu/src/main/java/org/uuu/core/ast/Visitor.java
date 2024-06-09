@@ -43,4 +43,6 @@ public interface Visitor<T> {
     T accept(Set set);
 
     T accept(Self self);
+
+    T accept(Super aSuper);
 }

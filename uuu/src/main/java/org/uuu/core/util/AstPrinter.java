@@ -21,8 +21,8 @@ public class AstPrinter implements Visitor<String> {
     @Override
     public String accept(Binary binary) {
         return "(" + printOperator(binary.getOperator()) + " " +
-                binary.getLeft().accept(this) + " " +
-                binary.getRight().accept(this) + ")";
+               binary.getLeft().accept(this) + " " +
+               binary.getRight().accept(this) + ")";
     }
 
     @Override
@@ -43,7 +43,7 @@ public class AstPrinter implements Visitor<String> {
     @Override
     public String accept(Ternary ternary) {
         return "(" + ternary.getCondition().accept(this) + " ? " +
-                ternary.getOnTrue().accept(this) + " : " + ternary.getOnFalse().accept(this) + ")";
+               ternary.getOnTrue().accept(this) + " : " + ternary.getOnFalse().accept(this) + ")";
     }
 
     @Override
@@ -59,7 +59,7 @@ public class AstPrinter implements Visitor<String> {
     @Override
     public String accept(Var var) {
         return "var " + var.getName().getLexeme() + " = " +
-                (var.getInitializer() != null ? var.getInitializer().accept(this) : "") + ";";
+               (var.getInitializer() != null ? var.getInitializer().accept(this) : "") + ";";
     }
 
     @Override
@@ -75,13 +75,13 @@ public class AstPrinter implements Visitor<String> {
     @Override
     public String accept(If anIf) {
         return "if(" + anIf.getCondition().accept(this) + ") " + anIf.getOnTrue().accept(this) + "" +
-                (anIf.getOnFalse() == null ? "" : "else " + anIf.getOnFalse().accept(this));
+               (anIf.getOnFalse() == null ? "" : "else " + anIf.getOnFalse().accept(this));
     }
 
     @Override
     public String accept(Logic logic) {
         return "(" + printOperator(logic.getOperator()) + " " + logic.getLeft().accept(this) + " " +
-                logic.getRight().accept(this) + ")";
+               logic.getRight().accept(this) + ")";
     }
 
     @Override
@@ -116,6 +116,11 @@ public class AstPrinter implements Visitor<String> {
 
     @Override
     public String accept(Self self) {
+        return "";
+    }
+
+    @Override
+    public String accept(Super aSuper) {
         return "";
     }
 
